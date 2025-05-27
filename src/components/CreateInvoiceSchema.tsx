@@ -21,13 +21,25 @@ interface CreateInvoiceDialogProps {
   onClose: () => void;
 }
 
+// Form values interface that matches the form fields
+interface CreateInvoiceFormValues {
+  outlet: number;
+  outlet_name: string;
+  invoice_number: string;
+  amount: number;
+  brand: string;
+  overdue_days: number;
+  route_name: string;
+}
+
 // Validation schema for the form
 const CreateInvoiceSchema = Yup.object().shape({
-  outletNumber: Yup.string()
+  outlet: Yup.number()
     .required('Outlet number is required')
-    .min(3, 'Too short!'),
-  outletName: Yup.string().required('Outlet name is required'),
-  invoiceNumber: Yup.string()
+    .positive('Outlet number must be positive')
+    .integer('Outlet number must be an integer'),
+  outlet_name: Yup.string().required('Outlet name is required'),
+  invoice_number: Yup.string()
     .required('Invoice number is required')
     .matches(/^INV-\d{4}-\d{3}$/, 'Invalid format! Use format: INV-YYYY-XXX'),
   amount: Yup.number()
@@ -35,11 +47,12 @@ const CreateInvoiceSchema = Yup.object().shape({
     .positive('Amount must be positive')
     .typeError('Amount must be a number'),
   brand: Yup.string().required('Brand is required'),
-  overdueDays: Yup.number()
+  overdue_days: Yup.number()
     .required('Overdue days is required')
     .min(0, 'Cannot be negative')
+    .integer('Overdue days must be an integer')
     .typeError('Overdue days must be a number'),
-  routeName: Yup.string().required('Route name is required'),
+  route_name: Yup.string().required('Route name is required'),
 });
 
 const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
@@ -48,17 +61,34 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
 }) => {
   const { addInvoice } = useData();
 
-  const handleSubmit = (
-    values: Omit<Invoice, 'id' | 'status' | 'invoiceDate' | 'assignedTo'>
+  const handleSubmit = async (
+    values: CreateInvoiceFormValues,
+    { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void }
   ) => {
-    // Add current date as invoice date
-    const invoiceData = {
-      ...values,
-      invoiceDate: format(new Date(), 'yyyy-MM-dd'),
-    };
+    try {
+      // Transform form values to match the Invoice type expected by addInvoice
+      const invoiceData: Omit<
+        Invoice,
+        'id' | 'status' | 'created_at' | 'cleared_at'
+      > = {
+        outlet: values.outlet,
+        outlet_name: values.outlet_name,
+        invoice_number: values.invoice_number,
+        amount: values.amount,
+        brand: values.brand,
+        overdue_days: values.overdue_days,
+        route_name: values.route_name,
+        invoice_date: format(new Date(), 'yyyy-MM-dd'), // Add current date
+      };
 
-    addInvoice(invoiceData);
-    onClose();
+      await addInvoice(invoiceData);
+      onClose();
+    } catch (error) {
+      console.error('Failed to create invoice:', error);
+      // Error handling is already done in the addInvoice function via toast
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -71,15 +101,15 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <Formik
+        <Formik<CreateInvoiceFormValues>
           initialValues={{
-            outletNumber: '',
-            outletName: '',
-            invoiceNumber: 'INV-' + format(new Date(), 'yyyy') + '-',
+            outlet: 0,
+            outlet_name: '',
+            invoice_number: 'INV-' + format(new Date(), 'yyyy') + '-',
             amount: 0,
             brand: '',
-            overdueDays: 0,
-            routeName: '',
+            overdue_days: 0,
+            route_name: '',
           }}
           validationSchema={CreateInvoiceSchema}
           onSubmit={handleSubmit}
@@ -88,85 +118,86 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
             <Form className='space-y-4'>
               <div className='grid gap-4 py-4'>
                 <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='outletNumber' className='text-right'>
-                    Outlet Number
+                  <Label htmlFor='outlet' className='text-right'>
+                    Outlet Number *
                   </Label>
                   <div className='col-span-3'>
                     <Field
                       as={Input}
-                      id='outletNumber'
-                      name='outletNumber'
-                      placeholder='OUT-001'
+                      id='outlet'
+                      name='outlet'
+                      type='number'
+                      placeholder='1001'
                       className={
-                        errors.outletNumber && touched.outletNumber
-                          ? 'border-red-500'
-                          : ''
+                        errors.outlet && touched.outlet ? 'border-red-500' : ''
                       }
                     />
                     <ErrorMessage
-                      name='outletNumber'
+                      name='outlet'
                       component='div'
-                      className='text-sm text-red-500'
+                      className='text-sm text-red-500 mt-1'
                     />
                   </div>
                 </div>
 
                 <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='outletName' className='text-right'>
-                    Outlet Name
+                  <Label htmlFor='outlet_name' className='text-right'>
+                    Outlet Name *
                   </Label>
                   <div className='col-span-3'>
                     <Field
                       as={Input}
-                      id='outletName'
-                      name='outletName'
+                      id='outlet_name'
+                      name='outlet_name'
                       placeholder='City Center Store'
                       className={
-                        errors.outletName && touched.outletName
+                        errors.outlet_name && touched.outlet_name
                           ? 'border-red-500'
                           : ''
                       }
                     />
                     <ErrorMessage
-                      name='outletName'
+                      name='outlet_name'
                       component='div'
-                      className='text-sm text-red-500'
+                      className='text-sm text-red-500 mt-1'
                     />
                   </div>
                 </div>
 
                 <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='invoiceNumber' className='text-right'>
-                    Invoice Number
+                  <Label htmlFor='invoice_number' className='text-right'>
+                    Invoice Number *
                   </Label>
                   <div className='col-span-3'>
                     <Field
                       as={Input}
-                      id='invoiceNumber'
-                      name='invoiceNumber'
-                      placeholder='INV-2023-001'
+                      id='invoice_number'
+                      name='invoice_number'
+                      placeholder='INV-2024-001'
                       className={
-                        errors.invoiceNumber && touched.invoiceNumber
+                        errors.invoice_number && touched.invoice_number
                           ? 'border-red-500'
                           : ''
                       }
                     />
                     <ErrorMessage
-                      name='invoiceNumber'
+                      name='invoice_number'
                       component='div'
-                      className='text-sm text-red-500'
+                      className='text-sm text-red-500 mt-1'
                     />
                   </div>
                 </div>
 
                 <div className='grid grid-cols-4 items-center gap-4'>
                   <Label htmlFor='amount' className='text-right'>
-                    Amount
+                    Amount *
                   </Label>
                   <div className='col-span-3'>
                     <Field
                       as={Input}
                       type='number'
+                      step='0.01'
+                      min='0'
                       id='amount'
                       name='amount'
                       placeholder='1000.00'
@@ -177,14 +208,14 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
                     <ErrorMessage
                       name='amount'
                       component='div'
-                      className='text-sm text-red-500'
+                      className='text-sm text-red-500 mt-1'
                     />
                   </div>
                 </div>
 
                 <div className='grid grid-cols-4 items-center gap-4'>
                   <Label htmlFor='brand' className='text-right'>
-                    Brand
+                    Brand *
                   </Label>
                   <div className='col-span-3'>
                     <Field
@@ -199,67 +230,73 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
                     <ErrorMessage
                       name='brand'
                       component='div'
-                      className='text-sm text-red-500'
+                      className='text-sm text-red-500 mt-1'
                     />
                   </div>
                 </div>
 
                 <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='overdueDays' className='text-right'>
-                    Overdue Days
+                  <Label htmlFor='overdue_days' className='text-right'>
+                    Overdue Days *
                   </Label>
                   <div className='col-span-3'>
                     <Field
                       as={Input}
                       type='number'
-                      id='overdueDays'
-                      name='overdueDays'
+                      min='0'
+                      id='overdue_days'
+                      name='overdue_days'
                       placeholder='0'
                       className={
-                        errors.overdueDays && touched.overdueDays
+                        errors.overdue_days && touched.overdue_days
                           ? 'border-red-500'
                           : ''
                       }
                     />
                     <ErrorMessage
-                      name='overdueDays'
+                      name='overdue_days'
                       component='div'
-                      className='text-sm text-red-500'
+                      className='text-sm text-red-500 mt-1'
                     />
                   </div>
                 </div>
 
                 <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='routeName' className='text-right'>
-                    Route Name
+                  <Label htmlFor='route_name' className='text-right'>
+                    Route Name *
                   </Label>
                   <div className='col-span-3'>
                     <Field
                       as={Input}
-                      id='routeName'
-                      name='routeName'
+                      id='route_name'
+                      name='route_name'
                       placeholder='Downtown Route'
                       className={
-                        errors.routeName && touched.routeName
+                        errors.route_name && touched.route_name
                           ? 'border-red-500'
                           : ''
                       }
                     />
                     <ErrorMessage
-                      name='routeName'
+                      name='route_name'
                       component='div'
-                      className='text-sm text-red-500'
+                      className='text-sm text-red-500 mt-1'
                     />
                   </div>
                 </div>
               </div>
 
               <DialogFooter>
-                <Button type='button' variant='outline' onClick={onClose}>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={onClose}
+                  disabled={isSubmitting}
+                >
                   Cancel
                 </Button>
                 <Button type='submit' disabled={isSubmitting}>
-                  Create Invoice
+                  {isSubmitting ? 'Creating...' : 'Create Invoice'}
                 </Button>
               </DialogFooter>
             </Form>

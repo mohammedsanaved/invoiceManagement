@@ -14,16 +14,16 @@ export interface Invoice {
   id: number;
   outlet: number;
   route_name: string;
-  route: number;
+  route?: number;
   outlet_name: string;
   overdue_days: number;
   invoice_number: string;
   invoice_date: string;
-  amount: string;
+  amount: number;
   brand: string;
   status: string;
-  created_at: string;
-  cleared_at: string | null;
+  created_at?: string;
+  cleared_at?: string | null;
   assigned_to_id?: number;
   assigned_to_name?: string;
 }
@@ -45,7 +45,7 @@ export interface SimpleBill {
 
 export interface Payment {
   id: string;
-  invoiceId: string;
+  invoiceId: number;
   amount: number;
   method: 'cash' | 'upi' | 'cheque';
   chequeType: 'rtgs' | 'neft' | 'imps';
@@ -69,7 +69,5 @@ export interface Outlet {
 }
 
 export interface UsersBills {
-  routes: Route[];
-  outlets: Outlet[];
   bills: SimpleBill[];
 }

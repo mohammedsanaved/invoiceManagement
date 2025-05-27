@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+// import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import Layout from '../components/Layout';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
-import type { Invoice } from '../types';
+import type { Invoice, SimpleBill } from '../types';
 import {
   Table,
   TableBody,
@@ -35,7 +35,6 @@ import {
 import { API_URL } from '@/lib/url';
 
 const UserDashboard = () => {
-  const { currentUser } = useAuth();
   const { userBills, userBillsLoading, userBillsError, fetchUserInvoices } =
     useData();
 
@@ -239,7 +238,7 @@ const UserDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bills.map((bill) => (
+                {bills.map((bill: SimpleBill) => (
                   <TableRow key={bill.id}>
                     <TableCell>{bill.route_name}</TableCell>
                     <TableCell>{bill.outlet_name}</TableCell>
@@ -294,13 +293,13 @@ const UserDashboard = () => {
               cheque_number: '',
               cheque_date: '',
             }}
-            validationSchema={(values) =>
+            validationSchema={(values: any) =>
               getValidationSchema(values?.payment_method)
             }
             onSubmit={handlePaymentSubmit}
             enableReinitialize
           >
-            {({ values, setFieldValue, errors, touched }) => (
+            {({ values, setFieldValue }) => (
               <Form className='grid gap-4 py-4'>
                 <div className='grid grid-cols-4 items-center gap-4'>
                   <Label className='text-right'>Invoice</Label>

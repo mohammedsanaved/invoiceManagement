@@ -11,15 +11,15 @@ import CreateInvoiceDialog from '../components/CreateInvoiceDialog';
 import axios from 'axios';
 import { API_URL } from '@/lib/url';
 import { useToast } from '../hooks/use-toast';
+import ExportDataDialog from '@/components/ExportDataDialog';
 
-// interface Employee {
-//   id: number;
-//   full_name: string;
-//   username: string;
-//   role: string;
-//   is_admin: boolean;
-// }
-
+interface Employee {
+  id: number;
+  username: string;
+  full_name: string;
+  role: string;
+  is_admin: boolean;
+}
 const AdminDashboard = () => {
   const { currentUser } = useAuth();
   const {
@@ -34,7 +34,8 @@ const AdminDashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const toast = useToast();
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleOpenUpdateAssignDialog = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
@@ -47,13 +48,13 @@ const AdminDashboard = () => {
       if (!token) return;
 
       try {
-        const response = await axios.get<string>(`${API_URL}/api/auth/users/`, {
+        const response = await axios.get(`${API_URL}/api/auth/users/`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         setEmployees(response.data);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching employee:', error);
       }
     };
@@ -95,16 +96,16 @@ const AdminDashboard = () => {
     );
   }
 
-  const handleAssign = async (invoice: Invoice, employeeId: number) => {
+  const handleAssign = async (invoiceId: number, employeeId: number) => {
     try {
       const token = localStorage.getItem('accessToken');
       console.log(employeeId, '-------------employee');
-      console.log(invoice, '--------------DataFromAssign');
+      console.log(invoiceId, '--------------DataFromAssign');
 
       const response = await axios.post(
-        `${API_URL}/api/bills/${invoice}/assign/`,
+        `${API_URL}/api/bills/${invoiceId}/assign/`,
         {
-          bill_ids: [invoice],
+          bill_ids: [invoiceId],
           dra_id: employeeId,
         },
         {
@@ -126,7 +127,7 @@ const AdminDashboard = () => {
       // );
       toast({
         title: 'Invoice Assigned',
-        description: `Invoice ${invoice} has been assigned successfully.`,
+        description: `Invoice ${invoiceId} has been assigned successfully.`,
       });
       // Optional: Show success message or refetch invoices
     } catch (error) {
@@ -163,8 +164,12 @@ const AdminDashboard = () => {
         <div className='flex justify-between gap-2 items-center'>
           <h1 className='text-2xl font-bold mb-6'>Admin Dashboard</h1>
           <div className='flex items-center gap-4'>
-            <Button className='flex items-center gap-2 cursor-pointer'>
+            <Button
+              className='flex items-center gap-2 cursor-pointer'
+              onClick={() => setIsExportDialogOpen(true)}
+            >
               <Outdent className='h-4 w-4' /> Export Bills
+              {/* <DatePickerWithRange className='bg-white' /> */}
             </Button>
             <Button className='flex items-center gap-2 cursor-pointer'>
               <FileInput className='h-4 w-4' /> Import Bills
@@ -211,6 +216,10 @@ const AdminDashboard = () => {
         open={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onAssign={handleConfirmAssign}
+      />
+      <ExportDataDialog
+        open={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
       />
 
       <CreateInvoiceDialog

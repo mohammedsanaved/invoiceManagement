@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useData } from '../context/DataContext';
-import type { Invoice } from '../types';
 import {
   Dialog,
   DialogContent,
@@ -37,7 +36,7 @@ interface CreateInvoiceDialogProps {
 // Validation schema for the form
 const CreateInvoiceSchema = Yup.object().shape({
   invoice_date: Yup.string().required('Invoice Date is required'),
-  outlet_id: Yup.number().required('Outlet is required'),
+  outlet: Yup.number().required('Outlet is required'),
   invoice_number: Yup.string()
     .required('Invoice number is required')
     .matches(/^INV-\d{4}-\d{3}$/, 'Invalid format! Use format: INV-YYYY-XXX'),
@@ -59,6 +58,14 @@ interface Route {
   id: number;
   name: string;
 }
+interface InvoiceValues {
+  invoice_date: string;
+  outlet: number;
+  invoice_number: string;
+  amount: number;
+  brand: string;
+  route_id: number;
+}
 
 const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
   open,
@@ -73,7 +80,7 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (
-    values: any,
+    values: InvoiceValues,
     { resetForm }: { resetForm: () => void }
   ) => {
     try {
@@ -82,7 +89,7 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
       // Create the invoice using DataContext
       await addInvoice({
         invoice_date: values.invoice_date,
-        outlet_id: values.outlet_id,
+        outlet: values.outlet,
         invoice_number: values.invoice_number,
         amount: values.amount,
         brand: values.brand,
@@ -95,7 +102,7 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
       setSelectedRouteId(null);
       setOutletOptions([]);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create invoice:', error);
       // Error is already handled in DataContext with toast
     } finally {
@@ -181,11 +188,11 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
         <Formik
           initialValues={{
             invoice_date: '',
-            outlet_id: '',
+            outlet: 0,
             invoice_number: 'INV-' + format(new Date(), 'yyyy') + '-',
             amount: 0,
             brand: '',
-            route_id: '',
+            route_id: 0,
           }}
           validationSchema={CreateInvoiceSchema}
           onSubmit={handleSubmit}
@@ -200,7 +207,18 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
                     Route Name
                   </Label>
                   <Field name='route_id'>
-                    {({ field, form }: any) => (
+                    {({
+                      field,
+                      form,
+                    }: {
+                      field: {
+                        name: string;
+                        value: string | number;
+                        onChange: React.ChangeEventHandler<HTMLSelectElement>;
+                        onBlur: React.FocusEventHandler<HTMLSelectElement>;
+                      };
+                      form: import('formik').FormikProps<InvoiceValues>;
+                    }) => (
                       <Select
                         value={String(field.value)}
                         onValueChange={(value) => {
@@ -211,7 +229,7 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
                           if (selectedRoute) {
                             setSelectedRouteId(selectedRoute.id);
                             // Reset outlet selection when route changes
-                            form.setFieldValue('outlet_id', '');
+                            form.setFieldValue('outlet', '');
                           }
                         }}
                       >
@@ -237,12 +255,23 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
 
                 {/* Outlet Name */}
                 <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='outlet_id' className='text-right'>
+                  <Label htmlFor='outlet' className='text-right'>
                     Outlet Name
                   </Label>
                   <div className='col-span-3'>
-                    <Field name='outlet_id'>
-                      {({ field, form }: any) => (
+                    <Field name='outlet'>
+                      {({
+                        field,
+                        form,
+                      }: {
+                        field: {
+                          name: string;
+                          value: string | number;
+                          onChange: React.ChangeEventHandler<HTMLSelectElement>;
+                          onBlur: React.FocusEventHandler<HTMLSelectElement>;
+                        };
+                        form: import('formik').FormikProps<InvoiceValues>;
+                      }) => (
                         <Select
                           value={String(field.value)}
                           onValueChange={(value) => {
@@ -273,7 +302,7 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
                       )}
                     </Field>
                     <ErrorMessage
-                      name='outlet_id'
+                      name='outlet'
                       component='div'
                       className='text-sm text-red-500'
                     />

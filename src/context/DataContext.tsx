@@ -4,12 +4,16 @@ import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 import { API_URL } from '@/lib/url';
 
+// const addInvoice = async () => {
+//   ...
+// };
+
 interface DataContextType {
   invoices: Invoice[];
   payments: Payment[];
   loading: boolean;
   error: string | null;
-  addInvoice: (invoice: Omit<Invoice, 'id' | 'status'>) => Promise<void>;
+  addInvoice: (invoice: Omit<Invoice, 'status'>) => Promise<void>;
   assignInvoice: (invoiceId: number, userId: number) => void;
   recordPayment: (payment: Omit<Payment, 'id'>) => void;
   getUserInvoices: (userId: number) => Invoice[];
@@ -113,9 +117,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         'Fetched user invoices------------------------------:',
         response.data
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch user invoices:', error);
-      setUserBillsError(error.message || 'Failed to fetch user invoices');
+      setUserBillsError(
+        error instanceof Error ? error.message : 'Failed to fetch user invoices'
+      );
       toast({
         title: 'Error',
         description: 'Unable to fetch user invoices.',
@@ -146,7 +152,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [payments]);
 
   // Updated addInvoice to create invoice via API and refresh the list
-  const addInvoice = async (invoiceData: Omit<Invoice, 'id' | 'status'>) => {
+  const addInvoice = async (
+    invoiceData: Omit<Invoice, 'status'> & { route_id?: number }
+  ) => {
     try {
       const token = localStorage.getItem('accessToken');
 
@@ -156,10 +164,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const payload = {
         invoice_date: invoiceData.invoice_date,
-        outlet: invoiceData.outlet_id,
+        outlet: invoiceData.outlet,
         invoice_number: invoiceData.invoice_number,
         amount: invoiceData.amount,
         brand: invoiceData.brand,
+        // route_id: invoiceData.route,
       };
 
       await axios.post(`${API_URL}/api/bills/`, payload, {
@@ -176,7 +185,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         title: 'Invoice Created',
         description: `Invoice ${invoiceData.invoice_number} has been created successfully.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create invoice:', error);
       toast({
         title: 'Error',
@@ -218,8 +227,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         .filter((p) => p.invoiceId === paymentData.invoiceId)
         .reduce((sum, p) => sum + p.amount, 0);
 
-      const newStatus =
-        totalPaid >= parseFloat(invoice.amount) ? 'paid' : 'partial';
+      const newStatus = totalPaid >= invoice.amount ? 'paid' : 'partial';
 
       setInvoices((prev) =>
         prev.map((inv) =>

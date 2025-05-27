@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import type { Invoice } from '../types';
-import { useAuth } from '../context/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -52,20 +51,22 @@ const AssignDialog: React.FC<AssignDialogProps> = ({
       setSelectedEmployeeId(invoice.assigned_to_id);
     }
   }, [invoice]);
-  const { currentUser } = useAuth();
   useEffect(() => {
     const fetchEmployee = async () => {
       const token = localStorage.getItem('accessToken');
       if (!token) return;
 
       try {
-        const response = await axios.get<string>(`${API_URL}/api/auth/users/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axios.get<Employee[]>(
+          `${API_URL}/api/auth/users/`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         setEmployees(response.data);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching employee:', error);
       }
     };
