@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-// import { useAuth } from '../context/AuthContext';
+import { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import Layout from '../components/Layout';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
@@ -34,6 +33,16 @@ import {
 } from '@/components/ui/select';
 import { API_URL } from '@/lib/url';
 
+// interface TransactionResponse {
+//   bill: number;
+//   payment_method: string;
+//   amount: string;
+//   transaction_number: number;
+//   cheque_type: string | null;
+//   cheque_number: string | null;
+//   cheque_date: string | null;
+// }
+
 const UserDashboard = () => {
   const { userBills, userBillsLoading, userBillsError, fetchUserInvoices } =
     useData();
@@ -43,13 +52,16 @@ const UserDashboard = () => {
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  console.log(selectedInvoice, '-------------------selectedInvoice');
+
   // Fetch user invoices on component mount
   useEffect(() => {
     fetchUserInvoices();
   }, []);
 
   // Access the bills array from the API response
-  const bills = userBills?.bills || [];
+  // userBills is UsersBills | null
+  const bills: SimpleBill[] = userBills?.bills ?? [];
 
   // Validation schema with conditional requirements
   const getValidationSchema = (paymentMethod: string) => {
@@ -97,21 +109,38 @@ const UserDashboard = () => {
     setIsPaymentDialogOpen(true);
   };
 
-  const handlePaymentSubmit = async (values: any) => {
+  interface PaymentFormValues {
+    amount: number;
+    payment_method: 'cash' | 'upi' | 'cheque';
+    transaction_number?: number | undefined;
+    cheque_type?: 'rtgs' | 'neft' | 'imps';
+    cheque_number?: string | undefined;
+    cheque_date?: string | undefined;
+  }
+
+  const handlePaymentSubmit = async (values: PaymentFormValues) => {
     if (!selectedInvoice) return;
 
     setIsSubmitting(true);
 
     try {
       // Prepare payload based on payment method
-      const payload = {
+      const payload: {
+        bill: number;
+        payment_method: string;
+        amount: string;
+        transaction_number?: number;
+        cheque_type?: string;
+        cheque_number?: string;
+        cheque_date?: string;
+      } = {
         bill: selectedInvoice.id,
         payment_method: values.payment_method,
         amount: values.amount.toString(),
-        transaction_number: null,
-        cheque_type: null,
-        cheque_number: null,
-        cheque_date: null,
+        transaction_number: undefined,
+        cheque_type: undefined,
+        cheque_number: undefined,
+        cheque_date: undefined,
       };
 
       // Set fields based on payment method
@@ -150,7 +179,7 @@ const UserDashboard = () => {
       await fetchUserInvoices();
 
       // Show success dialog if full amount is paid
-      if (values.amount >= parseFloat(selectedInvoice.amount)) {
+      if (values.amount >= selectedInvoice.amount) {
         setSuccessDialogOpen(true);
       }
     } catch (error) {
@@ -286,10 +315,10 @@ const UserDashboard = () => {
 
           <Formik
             initialValues={{
-              amount: selectedInvoice ? parseFloat(selectedInvoice.amount) : 0,
+              amount: selectedInvoice ? selectedInvoice.amount : 0,
               payment_method: 'cash',
-              transaction_number: '',
-              cheque_type: '',
+              transaction_number: 0,
+              cheque_type: 'rtgs',
               cheque_number: '',
               cheque_date: '',
             }}

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { Invoice, Payment, UsersBills } from '../types';
+import type { AssignmentsResponse, Invoice, Payment } from '../types';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 import { API_URL } from '@/lib/url';
@@ -24,7 +24,7 @@ interface DataContextType {
     message: string
   ) => Promise<void>;
   refreshInvoices: () => Promise<void>; // Add refresh function
-  userBills: UsersBills[]; // Adjust type as needed
+  userBills: AssignmentsResponse | null;
   userBillsLoading: boolean;
   userBillsError: string | null;
   fetchUserInvoices: () => Promise<void>; // Function to fetch user invoices
@@ -41,7 +41,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [userBillsLoading, setUserBillsLoading] = useState(true);
-  const [userBills, setUserBills] = useState<UsersBills[]>([]);
+  // after
+  const [userBills, setUserBills] = useState<AssignmentsResponse | null>(null);
+
   const [userBillsError, setUserBillsError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -112,7 +114,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
           },
         }
       );
-      setUserBills(response.data);
+      setUserBills(response.data as AssignmentsResponse);
       console.log(
         'Fetched user invoices------------------------------:',
         response.data

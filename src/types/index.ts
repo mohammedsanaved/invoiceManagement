@@ -68,6 +68,8 @@ export interface Outlet {
   route_name: string;
 }
 
-export interface UsersBills {
+export interface AssignmentsResponse {
+  routes: Route[];
+  outlets: Outlet[];
   bills: SimpleBill[];
 }

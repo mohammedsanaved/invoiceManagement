@@ -1,6 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import type { Invoice } from '../types';
-import { useAuth } from '../context/AuthContext';
+import React, { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,17 +8,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import axios from 'axios';
 import { API_URL } from '@/lib/url';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
 import { DatePickerWithRange } from './DatePickerWithRange';
 
 interface AssignDialogProps {
@@ -36,30 +25,19 @@ interface AssignDialogProps {
 // }
 
 const ExportDataDialog: React.FC<AssignDialogProps> = ({ open, onClose }) => {
-  //   console.log(invoice, '-----------------------Invoice');
-  //   const [employees, setEmployees] = useState<Employee[]>([]);
-  //   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
-  // null
-  //   );
-  //   useEffect(() => {
-  //     if (invoice?.assigned_to_id) {
-  //       setSelectedEmployeeId(invoice.assigned_to_id);
-  //     }
-  //   }, [invoice]);
-  //   const { currentUser } = useAuth();
   useEffect(() => {
     const fetchEmployee = async () => {
       const token = localStorage.getItem('accessToken');
       if (!token) return;
 
       try {
-        const response = await axios.get<string>(`${API_URL}/api/auth/users/`, {
+        await axios.get<string>(`${API_URL}/api/auth/users/`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         // setEmployees(response.data);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching employee:', error);
       }
     };
