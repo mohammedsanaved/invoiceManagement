@@ -14,7 +14,7 @@ export interface Invoice {
   id: number;
   outlet: number;
   route_name: string;
-  route?: number;
+  route: number;
   outlet_name: string;
   overdue_days: number;
   invoice_number: string;

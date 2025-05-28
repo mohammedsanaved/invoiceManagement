@@ -64,7 +64,7 @@ interface InvoiceValues {
   invoice_number: string;
   amount: number;
   brand: string;
-  route_id: number;
+  route: number;
 }
 
 const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
@@ -93,7 +93,7 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
         invoice_number: values.invoice_number,
         amount: values.amount,
         brand: values.brand,
-        route_id: values.route_id,
+        route: values.route,
       });
 
       // Reset form and close dialog on success
@@ -192,7 +192,7 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
             invoice_number: 'INV-' + format(new Date(), 'yyyy') + '-',
             amount: 0,
             brand: '',
-            route_id: 0,
+            route: 0,
           }}
           validationSchema={CreateInvoiceSchema}
           onSubmit={handleSubmit}
@@ -203,10 +203,10 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
               <div className='grid gap-4 py-4'>
                 {/* Route Name */}
                 <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='route_id' className='text-right'>
+                  <Label htmlFor='route' className='text-right'>
                     Route Name
                   </Label>
-                  <Field name='route_id'>
+                  <Field name='route'>
                     {({
                       field,
                       form,
@@ -247,7 +247,7 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
                     )}
                   </Field>
                   <ErrorMessage
-                    name='route_id'
+                    name='route'
                     component='div'
                     className='text-sm text-red-500 col-span-4 ml-[33%]'
                   />

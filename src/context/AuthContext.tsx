@@ -20,6 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
+
   console.log(currentUser?.full_name, '----------------currentUser');
 
   useEffect(() => {
@@ -63,11 +64,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const data = await response.json();
       const { access, refresh, user } = data;
+      console.log(user, '-----------------user');
 
       // Save to localStorage
       localStorage.setItem('accessToken', access);
       localStorage.setItem('refreshToken', refresh);
       localStorage.setItem('currentUser', JSON.stringify(user));
+      localStorage.setItem('role', user.role);
 
       setAccessToken(access);
       setCurrentUser(user);

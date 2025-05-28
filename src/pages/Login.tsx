@@ -53,12 +53,20 @@ const Login = () => {
           description: 'Invalid user role. Please contact admin.',
         });
       }
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: 'Invalid email or password. Please try again.',
-      });
+    } catch (error: string | unknown) {
+      if (error instanceof Error) {
+        toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: error.message,
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: 'An unknown error occurred',
+        });
+      }
     } finally {
       setIsLoading(false);
     }

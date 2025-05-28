@@ -13,7 +13,18 @@ interface DataContextType {
   payments: Payment[];
   loading: boolean;
   error: string | null;
-  addInvoice: (invoice: Omit<Invoice, 'status'>) => Promise<void>;
+  addInvoice: (
+    invoice: Omit<
+      Invoice,
+      | 'id'
+      | 'status'
+      | 'created_at'
+      | 'cleared_at'
+      | 'overdue_days'
+      | 'route_name'
+      | 'outlet_name'
+    >
+  ) => Promise<void>;
   assignInvoice: (invoiceId: number, userId: number) => void;
   recordPayment: (payment: Omit<Payment, 'id'>) => void;
   getUserInvoices: (userId: number) => Invoice[];
@@ -155,7 +166,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Updated addInvoice to create invoice via API and refresh the list
   const addInvoice = async (
-    invoiceData: Omit<Invoice, 'status'> & { route_id?: number }
+    invoiceData: Omit<
+      Invoice,
+      | 'id'
+      | 'status'
+      | 'created_at'
+      | 'cleared_at'
+      | 'overdue_days'
+      | 'route_name'
+      | 'outlet_name'
+    >
   ) => {
     try {
       const token = localStorage.getItem('accessToken');
@@ -170,7 +190,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         invoice_number: invoiceData.invoice_number,
         amount: invoiceData.amount,
         brand: invoiceData.brand,
-        // route_id: invoiceData.route,
+        route: invoiceData.route,
       };
 
       await axios.post(`${API_URL}/api/bills/`, payload, {

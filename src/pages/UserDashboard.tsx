@@ -4,7 +4,7 @@ import Layout from '../components/Layout';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
-import type { Invoice, SimpleBill } from '../types';
+import type { SimpleBill } from '../types';
 import {
   Table,
   TableBody,
@@ -48,7 +48,9 @@ const UserDashboard = () => {
     useData();
 
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<SimpleBill | null>(
+    null
+  );
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -86,9 +88,9 @@ const UserDashboard = () => {
     } else if (paymentMethod === 'cheque') {
       return Yup.object({
         ...baseSchema,
-        transaction_number: Yup.number()
-          .required('Transaction number is required for cheque payments')
-          .positive('Transaction number must be positive'),
+        // transaction_number: Yup.number()
+        //   .required('Transaction number is required for cheque payments')
+        //   .positive('Transaction number must be positive'),
         cheque_type: Yup.string()
           .required('Cheque type is required')
           .oneOf(['rtgs', 'neft', 'imps'], 'Invalid cheque type'),
@@ -104,7 +106,7 @@ const UserDashboard = () => {
     return Yup.object(baseSchema);
   };
 
-  const handleRecord = (invoice: Invoice) => {
+  const handleRecord = (invoice: SimpleBill) => {
     setSelectedInvoice(invoice);
     setIsPaymentDialogOpen(true);
   };
@@ -149,7 +151,7 @@ const UserDashboard = () => {
       } else if (values.payment_method === 'upi') {
         payload.transaction_number = values.transaction_number;
       } else if (values.payment_method === 'cheque') {
-        payload.transaction_number = values.transaction_number;
+        // payload.transaction_number = values.transaction_number;
         payload.cheque_type = values.cheque_type;
         payload.cheque_number = values.cheque_number;
         payload.cheque_date = values.cheque_date;
@@ -179,7 +181,7 @@ const UserDashboard = () => {
       await fetchUserInvoices();
 
       // Show success dialog if full amount is paid
-      if (values.amount >= selectedInvoice.amount) {
+      if (values.amount >= Number(selectedInvoice.amount)) {
         setSuccessDialogOpen(true);
       }
     } catch (error) {
@@ -315,14 +317,14 @@ const UserDashboard = () => {
 
           <Formik
             initialValues={{
-              amount: selectedInvoice ? selectedInvoice.amount : 0,
+              amount: selectedInvoice ? Number(selectedInvoice.amount) : 0,
               payment_method: 'cash',
               transaction_number: 0,
               cheque_type: 'rtgs',
               cheque_number: '',
               cheque_date: '',
             }}
-            validationSchema={(values: any) =>
+            validationSchema={(values: PaymentFormValues) =>
               getValidationSchema(values?.payment_method)
             }
             onSubmit={handlePaymentSubmit}
@@ -409,7 +411,7 @@ const UserDashboard = () => {
 
                 {values.payment_method === 'cheque' && (
                   <>
-                    <div className='grid grid-cols-4 items-center gap-4'>
+                    {/* <div className='grid grid-cols-4 items-center gap-4'>
                       <Label className='text-right'>Transaction Number *</Label>
                       <div className='col-span-3'>
                         <Field
@@ -424,7 +426,7 @@ const UserDashboard = () => {
                           className='text-red-500 text-sm mt-1'
                         />
                       </div>
-                    </div>
+                    </div> */}
 
                     <div className='grid grid-cols-4 items-center gap-4'>
                       <Label className='text-right'>Cheque Type *</Label>
