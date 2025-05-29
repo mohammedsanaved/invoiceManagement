@@ -56,6 +56,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
   const [userBills, setUserBills] = useState<AssignmentsResponse | null>(null);
 
   const [userBillsError, setUserBillsError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -192,6 +194,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         brand: invoiceData.brand,
         route: invoiceData.route,
       };
+      console.log('Adding invoice with payload:', payload);
+      setSubmitting(true);
 
       await axios.post(`${API_URL}/api/bills/`, payload, {
         headers: {
@@ -199,7 +203,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
           'Content-Type': 'application/json',
         },
       });
-
+      setSubmitting(false);
+      console.log(submitting, 'Invoice created successfully');
       // Refresh the invoices list to get the new invoice
       await refreshInvoices();
 
@@ -215,6 +220,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         variant: 'destructive',
       });
       throw error; // Re-throw so the component knows it failed
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -309,6 +316,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         fetchUserInvoices,
         fetchInvoices, // Expose the fetchInvoices function
         refreshUserInvoices, // Expose the refresh function for user invoices
+        // submitting,
       }}
     >
       {children}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form, Field, ErrorMessage, type FormikHelpers } from 'formik';
+
 import * as Yup from 'yup';
 import { useData } from '../context/DataContext';
 import {
@@ -36,7 +37,12 @@ interface CreateInvoiceDialogProps {
 // Validation schema for the form
 const CreateInvoiceSchema = Yup.object().shape({
   invoice_date: Yup.string().required('Invoice Date is required'),
-  outlet: Yup.number().required('Outlet is required'),
+  route: Yup.number()
+    .required('Route is required')
+    .min(1, 'Please select a route'),
+  outlet: Yup.number()
+    .required('Outlet is required')
+    .min(1, 'Please select an outlet'),
   invoice_number: Yup.string()
     .required('Invoice number is required')
     .matches(/^INV-\d{4}-\d{3}$/, 'Invalid format! Use format: INV-YYYY-XXX'),
@@ -45,7 +51,6 @@ const CreateInvoiceSchema = Yup.object().shape({
     .positive('Amount must be positive')
     .typeError('Amount must be a number'),
   brand: Yup.string().required('Brand is required'),
-  route_id: Yup.number().required('Route is required'),
 });
 
 interface Outlet {
@@ -59,12 +64,12 @@ interface Route {
   name: string;
 }
 interface InvoiceValues {
-  invoice_date: string;
+  route: number;
   outlet: number;
   invoice_number: string;
+  invoice_date: string;
   amount: number;
   brand: string;
-  route: number;
 }
 
 const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
@@ -79,32 +84,30 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
   const [date, setDate] = useState<Date | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (
+  const onHandleCreateInvoice = async (
     values: InvoiceValues,
-    { resetForm }: { resetForm: () => void }
+    formikHelpers: FormikHelpers<InvoiceValues>
   ) => {
+    console.log(values, 'Form Values');
     try {
       setIsSubmitting(true);
 
-      // Create the invoice using DataContext
       await addInvoice({
-        invoice_date: values.invoice_date,
+        route: values.route,
         outlet: values.outlet,
         invoice_number: values.invoice_number,
+        invoice_date: values.invoice_date,
         amount: values.amount,
         brand: values.brand,
-        route: values.route,
       });
 
-      // Reset form and close dialog on success
-      resetForm();
+      formikHelpers.resetForm();
       setDate(undefined);
       setSelectedRouteId(null);
       setOutletOptions([]);
       onClose();
     } catch (error: unknown) {
       console.error('Failed to create invoice:', error);
-      // Error is already handled in DataContext with toast
     } finally {
       setIsSubmitting(false);
     }
@@ -195,10 +198,10 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
             route: 0,
           }}
           validationSchema={CreateInvoiceSchema}
-          onSubmit={handleSubmit}
+          onSubmit={onHandleCreateInvoice}
           enableReinitialize
         >
-          {({ errors, touched, setFieldValue, values }) => (
+          {({ errors, touched, setFieldValue, values, handleSubmit }) => (
             <Form className='space-y-4'>
               <div className='grid gap-4 py-4'>
                 {/* Route Name */}

@@ -68,6 +68,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
           <TableHead>Invoice No.</TableHead>
           <TableHead>Invoice Date</TableHead>
           <TableHead>Amount</TableHead>
+          <TableHead>Remaining Amount</TableHead>
           <TableHead>Brand</TableHead>
           <TableHead>Assign To</TableHead>
           <TableHead>Status</TableHead>
@@ -84,6 +85,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
               <TableCell>{invoice.outlet_name}</TableCell>
               <TableCell>{invoice.invoice_number}</TableCell>
               <TableCell>{invoice.invoice_date}</TableCell>
+              <TableCell>${invoice.amount}</TableCell>
               <TableCell>${invoice.amount}</TableCell>
               <TableCell>{invoice.brand}</TableCell>
               <TableCell>
