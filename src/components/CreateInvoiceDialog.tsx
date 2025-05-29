@@ -201,7 +201,7 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
           onSubmit={onHandleCreateInvoice}
           enableReinitialize
         >
-          {({ errors, touched, setFieldValue, values, handleSubmit }) => (
+          {({ errors, touched, setFieldValue, values }) => (
             <Form className='space-y-4'>
               <div className='grid gap-4 py-4'>
                 {/* Route Name */}
