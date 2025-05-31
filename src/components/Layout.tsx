@@ -28,7 +28,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <span className='text-gray-600'>
                 Welcome, {currentUser.full_name} ({currentUser.role})
               </span>
-              <Button variant='outline' onClick={handleLogout}>
+              <Button
+                variant='outline'
+                className='cursor-pointer'
+                onClick={handleLogout}
+              >
                 Logout
               </Button>
             </div>

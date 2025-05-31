@@ -190,7 +190,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         invoice_date: invoiceData.invoice_date,
         outlet: invoiceData.outlet,
         invoice_number: invoiceData.invoice_number,
-        amount: invoiceData.amount,
+        actual_amount: invoiceData.actual_amount,
         brand: invoiceData.brand,
         route: invoiceData.route,
       };
@@ -256,7 +256,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
         .filter((p) => p.invoiceId === paymentData.invoiceId)
         .reduce((sum, p) => sum + p.amount, 0);
 
-      const newStatus = totalPaid >= invoice.amount ? 'paid' : 'partial';
+      const newStatus = totalPaid >= invoice.actual_amount ? 'paid' : 'partial';
 
       setInvoices((prev) =>
         prev.map((inv) =>

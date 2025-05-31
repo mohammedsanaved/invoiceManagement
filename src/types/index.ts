@@ -17,9 +17,10 @@ export interface Invoice {
   route: number;
   outlet_name: string;
   overdue_days: number;
+  remaining_amount?: string;
   invoice_number: string;
   invoice_date: string;
-  amount: number;
+  actual_amount: number;
   brand: string;
   status: string;
   created_at?: string;
@@ -33,7 +34,7 @@ export interface SimpleBill {
   id: number;
   invoice_number: string;
   invoice_date: string;
-  amount: string;
+  actual_amount: string;
   brand: string;
   status: string;
   overdue_days: number;

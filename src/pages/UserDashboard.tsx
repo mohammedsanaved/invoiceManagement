@@ -33,16 +33,6 @@ import {
 } from '@/components/ui/select';
 import { API_URL } from '@/lib/url';
 
-// interface TransactionResponse {
-//   bill: number;
-//   payment_method: string;
-//   amount: string;
-//   transaction_number: number;
-//   cheque_type: string | null;
-//   cheque_number: string | null;
-//   cheque_date: string | null;
-// }
-
 const UserDashboard = () => {
   const { userBills, userBillsLoading, userBillsError, fetchUserInvoices } =
     useData();
@@ -65,13 +55,14 @@ const UserDashboard = () => {
   // userBills is UsersBills | null
   const bills: SimpleBill[] = userBills?.bills ?? [];
 
-  // Validation schema with conditional requirements
-  const getValidationSchema = (paymentMethod: string) => {
+  // Validation schema with conditional requirements and amount limits
+  const getValidationSchema = (paymentMethod: string, maxAmount: number) => {
     const baseSchema = {
-      amount: Yup.number()
+      actual_amount: Yup.number()
         .required('Amount is required')
         .positive('Amount must be positive')
-        .min(0.01, 'Amount must be at least 0.01'),
+        .min(1, 'Amount must be at least 1')
+        .max(maxAmount, `Amount cannot exceed ${maxAmount}`),
       payment_method: Yup.string()
         .required('Payment method is required')
         .oneOf(['cash', 'upi', 'cheque'], 'Invalid payment method'),
@@ -88,9 +79,6 @@ const UserDashboard = () => {
     } else if (paymentMethod === 'cheque') {
       return Yup.object({
         ...baseSchema,
-        // transaction_number: Yup.number()
-        //   .required('Transaction number is required for cheque payments')
-        //   .positive('Transaction number must be positive'),
         cheque_type: Yup.string()
           .required('Cheque type is required')
           .oneOf(['rtgs', 'neft', 'imps'], 'Invalid cheque type'),
@@ -112,13 +100,14 @@ const UserDashboard = () => {
   };
 
   interface PaymentFormValues {
-    amount: number;
+    actual_amount: number;
     payment_method: 'cash' | 'upi' | 'cheque';
     transaction_number?: number | undefined;
     cheque_type?: 'rtgs' | 'neft' | 'imps';
     cheque_number?: string | undefined;
     cheque_date?: string | undefined;
   }
+  console.log('Selected Invoice:', selectedInvoice);
 
   const handlePaymentSubmit = async (values: PaymentFormValues) => {
     if (!selectedInvoice) return;
@@ -130,7 +119,7 @@ const UserDashboard = () => {
       const payload: {
         bill: number;
         payment_method: string;
-        amount: string;
+        actual_amount: string;
         transaction_number?: number;
         cheque_type?: string;
         cheque_number?: string;
@@ -138,7 +127,7 @@ const UserDashboard = () => {
       } = {
         bill: selectedInvoice.id,
         payment_method: values.payment_method,
-        amount: values.amount.toString(),
+        actual_amount: values.actual_amount.toString(),
         transaction_number: undefined,
         cheque_type: undefined,
         cheque_number: undefined,
@@ -151,7 +140,6 @@ const UserDashboard = () => {
       } else if (values.payment_method === 'upi') {
         payload.transaction_number = values.transaction_number;
       } else if (values.payment_method === 'cheque') {
-        // payload.transaction_number = values.transaction_number;
         payload.cheque_type = values.cheque_type;
         payload.cheque_number = values.cheque_number;
         payload.cheque_date = values.cheque_date;
@@ -159,14 +147,13 @@ const UserDashboard = () => {
 
       const token = localStorage.getItem('accessToken');
 
-      // // Make API call
+      // Make API call
       const response = await axios.post(
         `${API_URL}/api/payments/${selectedInvoice.id}/payments/`,
         payload,
         {
           headers: {
             'Content-Type': 'application/json',
-            // Add authorization header if needed
             Authorization: `Bearer ${token}`,
           },
         }
@@ -181,7 +168,7 @@ const UserDashboard = () => {
       await fetchUserInvoices();
 
       // Show success dialog if full amount is paid
-      if (values.amount >= Number(selectedInvoice.amount)) {
+      if (values.actual_amount >= Number(selectedInvoice.actual_amount)) {
         setSuccessDialogOpen(true);
       }
     } catch (error) {
@@ -317,7 +304,7 @@ const UserDashboard = () => {
 
           <Formik
             initialValues={{
-              amount: selectedInvoice ? Number(selectedInvoice.amount) : 0,
+              actual_amount: 0,
               payment_method: 'cash',
               transaction_number: 0,
               cheque_type: 'rtgs',
@@ -325,7 +312,10 @@ const UserDashboard = () => {
               cheque_date: '',
             }}
             validationSchema={(values: PaymentFormValues) =>
-              getValidationSchema(values?.payment_method)
+              getValidationSchema(
+                values?.payment_method,
+                selectedInvoice ? Number(selectedInvoice.actual_amount) : 0
+              )
             }
             onSubmit={handlePaymentSubmit}
             enableReinitialize
@@ -333,7 +323,7 @@ const UserDashboard = () => {
             {({ values, setFieldValue }) => (
               <Form className='grid gap-4 py-4'>
                 <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label className='text-right'>Invoice</Label>
+                  <Label className='text-right'>Invoice Number</Label>
                   <Input
                     className='col-span-3'
                     value={selectedInvoice?.invoice_number || ''}
@@ -349,13 +339,25 @@ const UserDashboard = () => {
                       name='amount'
                       type='number'
                       step='0.01'
-                      min='0'
+                      min='1'
+                      max={
+                        selectedInvoice
+                          ? Number(selectedInvoice.actual_amount)
+                          : undefined
+                      }
+                      placeholder='Enter payment amount'
                     />
                     <ErrorMessage
                       name='amount'
                       component='div'
                       className='text-red-500 text-sm mt-1'
                     />
+                    {/* <div className='text-xs text-gray-500 mt-1'>
+                      Maximum amount: ₹
+                      {selectedInvoice
+                        ? Number(selectedInvoice.amount).toFixed(2)
+                        : '0.00'}
+                    </div> */}
                   </div>
                 </div>
 
@@ -411,23 +413,6 @@ const UserDashboard = () => {
 
                 {values.payment_method === 'cheque' && (
                   <>
-                    {/* <div className='grid grid-cols-4 items-center gap-4'>
-                      <Label className='text-right'>Transaction Number *</Label>
-                      <div className='col-span-3'>
-                        <Field
-                          as={Input}
-                          name='transaction_number'
-                          type='number'
-                          placeholder='Enter transaction number'
-                        />
-                        <ErrorMessage
-                          name='transaction_number'
-                          component='div'
-                          className='text-red-500 text-sm mt-1'
-                        />
-                      </div>
-                    </div> */}
-
                     <div className='grid grid-cols-4 items-center gap-4'>
                       <Label className='text-right'>Cheque Type *</Label>
                       <div className='col-span-3'>

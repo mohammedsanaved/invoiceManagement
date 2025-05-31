@@ -43,10 +43,8 @@ const CreateInvoiceSchema = Yup.object().shape({
   outlet: Yup.number()
     .required('Outlet is required')
     .min(1, 'Please select an outlet'),
-  invoice_number: Yup.string()
-    .required('Invoice number is required')
-    .matches(/^INV-\d{4}-\d{3}$/, 'Invalid format! Use format: INV-YYYY-XXX'),
-  amount: Yup.number()
+  invoice_number: Yup.string().required('Invoice number is required'),
+  actual_amount: Yup.number()
     .required('Amount is required')
     .positive('Amount must be positive')
     .typeError('Amount must be a number'),
@@ -68,7 +66,7 @@ interface InvoiceValues {
   outlet: number;
   invoice_number: string;
   invoice_date: string;
-  amount: number;
+  actual_amount: number;
   brand: string;
 }
 
@@ -97,7 +95,7 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
         outlet: values.outlet,
         invoice_number: values.invoice_number,
         invoice_date: values.invoice_date,
-        amount: values.amount,
+        actual_amount: values.actual_amount,
         brand: values.brand,
       });
 
@@ -193,7 +191,7 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
             invoice_date: '',
             outlet: 0,
             invoice_number: 'INV-' + format(new Date(), 'yyyy') + '-',
-            amount: 0,
+            actual_amount: 0,
             brand: '',
             route: 0,
           }}
@@ -383,22 +381,24 @@ const CreateInvoiceDialog: React.FC<CreateInvoiceDialogProps> = ({
 
                 {/* Amount */}
                 <div className='grid grid-cols-4 items-center gap-4'>
-                  <Label htmlFor='amount' className='text-right'>
+                  <Label htmlFor='actual_amount' className='text-right'>
                     Amount
                   </Label>
                   <div className='col-span-3'>
                     <Field
                       as={Input}
                       type='number'
-                      id='amount'
-                      name='amount'
+                      id='actual_amount'
+                      name='actual_amount'
                       placeholder='1000.00'
                       className={
-                        errors.amount && touched.amount ? 'border-red-500' : ''
+                        errors.actual_amount && touched.actual_amount
+                          ? 'border-red-500'
+                          : ''
                       }
                     />
                     <ErrorMessage
-                      name='amount'
+                      name='actual_amount'
                       component='div'
                       className='text-sm text-red-500'
                     />

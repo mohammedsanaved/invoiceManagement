@@ -26,7 +26,7 @@ const AdminDashboard = () => {
   const { currentUser } = useAuth();
   const {
     invoices,
-    assignInvoice,
+    // assignInvoice,
     sendNotification,
     loading,
     error,
@@ -42,6 +42,7 @@ const AdminDashboard = () => {
   const handleOpenUpdateAssignDialog = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
     setIsDialogOpen(true); // Open the dialog
+    // console.log(selectedInvoice, '--------------------------Selected Invoice');
   };
 
   useEffect(() => {
@@ -142,13 +143,13 @@ const AdminDashboard = () => {
     if (!selectedInvoice || !currentUser) return;
 
     // Always assign to user ID 2 (employee) in this demo
-    assignInvoice(selectedInvoice.id, 2);
+    // assignInvoice(selectedInvoice.id, 2);
 
     // Send notification emails
     await sendNotification(
       'employee1@example.com',
       'New Collection Assignment',
-      `You have been assigned to collect invoice ${selectedInvoice.invoice_number} for $${selectedInvoice.amount}`
+      `You have been assigned to collect invoice ${selectedInvoice.invoice_number} for $${selectedInvoice.actual_amount}`
     );
 
     await sendNotification(
@@ -218,6 +219,7 @@ const AdminDashboard = () => {
         open={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onAssign={handleConfirmAssign}
+        refreshInvoices={refreshInvoices}
       />
       <ExportDataDialog
         open={isExportDialogOpen}

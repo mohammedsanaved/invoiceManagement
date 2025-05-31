@@ -20,12 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
+// import { ref } from 'process';
 
 interface AssignDialogProps {
   invoice: Invoice | null;
   open: boolean;
   onClose: () => void;
   onAssign: () => void;
+  refreshInvoices: () => void;
 }
 interface Employee {
   id: number;
@@ -40,6 +42,7 @@ const AssignDialog: React.FC<AssignDialogProps> = ({
   open,
   onClose,
   onAssign,
+  refreshInvoices,
 }) => {
   console.log(invoice, '-----------------------Invoice');
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -77,15 +80,37 @@ const AssignDialog: React.FC<AssignDialogProps> = ({
 
   if (!invoice) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault();
-    onAssign();
+    const token = localStorage.getItem('accessToken');
+    if (!token || !invoice?.id || selectedEmployeeId === null) return;
+
+    // console.log('invoiceId', invoice?.id, 'selectedID', selectedEmployeeId);
+
+    try {
+      await axios.patch(
+        `${API_URL}/api/bills/${invoice.id}/`,
+        {
+          assigned_to_id: selectedEmployeeId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      onClose();
+      refreshInvoices();
+      onAssign(); // Call the onAssign function to notify parent component
+    } catch (error: unknown) {
+      console.error('Error assigning employee:', error);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className='sm:max-w-lg'>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleAssign}>
           <DialogHeader>
             <DialogTitle>Assign Invoice for Collection</DialogTitle>
             <DialogDescription>
@@ -108,14 +133,11 @@ const AssignDialog: React.FC<AssignDialogProps> = ({
             <div className='grid grid-cols-4 items-center gap-4'>
               <Label className='text-right'>Amount</Label>
               <div className='col-span-3'>
-                <Input value={invoice.amount} readOnly />
+                <Input value={invoice.actual_amount} readOnly />
               </div>
             </div>
             <div className='grid grid-cols-4 items-center gap-4'>
               <Label className='text-right'>Assign To</Label>
-              {/* <div className='col-span-3'>
-                <Input value='Employee One' readOnly />
-              </div> */}
               <Select
                 value={selectedEmployeeId?.toString()}
                 onValueChange={(value) => setSelectedEmployeeId(Number(value))}
@@ -137,7 +159,9 @@ const AssignDialog: React.FC<AssignDialogProps> = ({
             <Button type='button' variant='outline' onClick={onClose}>
               Cancel
             </Button>
-            <Button type='submit'>Assign Invoice</Button>
+            <Button className='cursor-pointer' type='submit'>
+              Assign Invoice
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
