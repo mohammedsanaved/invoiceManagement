@@ -28,7 +28,7 @@ interface FormValues {
   end_date: string; // "yyyy-MM-dd"
 }
 
-const ExportDataDialog: React.FC<ExportDataDialogProps> = ({
+const ExportPaymentDataDialog: React.FC<ExportDataDialogProps> = ({
   open,
   onClose,
 }) => {
@@ -69,7 +69,7 @@ const ExportDataDialog: React.FC<ExportDataDialogProps> = ({
     try {
       // We use GET with query parameters for start & end.
       const response = await fetch(
-        `${API_URL}/api/bills/export-bills/?start_date=${encodeURIComponent(
+        `${API_URL}/api/bills/export-payments/?start_date=${encodeURIComponent(
           start_date
         )}&end_date=${encodeURIComponent(end_date)}`,
         {
@@ -93,7 +93,7 @@ const ExportDataDialog: React.FC<ExportDataDialogProps> = ({
       const blob = await response.blob();
       // Attempt to extract a filename from the Content-Disposition header, if present
       const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = 'exported-bills';
+      let filename = 'exported-payments-bills';
       if (contentDisposition) {
         const match = contentDisposition.match(/filename="?(.+)"?/);
         if (match && match[1]) {
@@ -130,7 +130,7 @@ const ExportDataDialog: React.FC<ExportDataDialogProps> = ({
           {({ values, setFieldValue, isSubmitting }) => (
             <Form>
               <DialogHeader>
-                <DialogTitle>Export Invoice Data</DialogTitle>
+                <DialogTitle>Export Payments Data</DialogTitle>
               </DialogHeader>
 
               {/* Start Date */}
@@ -239,4 +239,4 @@ const ExportDataDialog: React.FC<ExportDataDialogProps> = ({
   );
 };
 
-export default ExportDataDialog;
+export default ExportPaymentDataDialog;

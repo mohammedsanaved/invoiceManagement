@@ -1,9 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import type { Invoice } from '../types';
 import Layout from '../components/Layout';
-import { FileInput, Outdent, Plus } from 'lucide-react';
+import {
+  ArrowUpRight,
+  ChevronDown,
+  FileInput,
+  Outdent,
+  // Outdent,
+  Plus,
+  Search,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InvoiceTable from '../components/InvoiceTable';
 import AssignDialog from '../components/AssignDialog';
@@ -13,7 +21,9 @@ import { API_URL } from '@/lib/url';
 import { useToast } from '../hooks/use-toast';
 import ExportDataDialog from '@/components/ExportDataDialog';
 import CreateInvoiceDialog from '@/components/CreateInvoiceDialog';
-// import CreateInvoiceSchema from '@/components/CreateInvoiceSchema';
+import { Link } from 'react-router-dom';
+import ImportDataDialog from '@/components/ImportDataDialog';
+import { Input } from '@/components/ui/input';
 
 interface Employee {
   id: number;
@@ -31,13 +41,42 @@ const AdminDashboard = () => {
     loading,
     error,
     refreshInvoices,
+    fetchInvoices,
   } = useData();
+  const pageSize = 10;
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(invoices.length / pageSize);
+  }, [invoices.length]);
+
+  const paginatedInvoices: Invoice[] = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return invoices.slice(startIndex, endIndex);
+  }, [invoices, currentPage]);
+
+  const handleSearch = () => {
+    // Trigger fetchInvoices with the searchTerm filter
+    fetchInvoices(searchTerm.trim() || undefined);
+    setCurrentPage(1);
+  };
+
+  const goToPrevious = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+  const goToNext = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
 
   const handleOpenUpdateAssignDialog = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
@@ -164,17 +203,37 @@ const AdminDashboard = () => {
   return (
     <Layout>
       <div className='max-w-7xl mx-auto'>
-        <div className='flex justify-between gap-2 items-center'>
-          <h1 className='text-2xl font-bold mb-6'>Admin Dashboard</h1>
-          <div className='flex items-center gap-4'>
+        <div className='flex sm:flex-row flex-col pb-4 justify-between gap-2 items-center'>
+          <h1 className='text-2xl font-bold mb-2'>Admin Dashboard</h1>
+          <div className='flex w-full sm:w-auto items-center gap-2'>
+            {/* ←— Search input + button */}
+            <Input
+              placeholder='Search by Invoice Number'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Button onClick={handleSearch}>
+              <Search className='h-4 w-4' />
+            </Button>
+          </div>
+          <div className='flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow'>
+            <Link to='/admin/payments'>
+              <Button className='flex items-center gap-2 cursor-pointer'>
+                Payments History
+                <ArrowUpRight className='h-4 w-4' />
+                {/* <DatePickerWithRange className='bg-white' /> */}
+              </Button>
+            </Link>
             <Button
               className='flex items-center gap-2 cursor-pointer'
               onClick={() => setIsExportDialogOpen(true)}
             >
               <Outdent className='h-4 w-4' /> Export Bills
-              {/* <DatePickerWithRange className='bg-white' /> */}
             </Button>
-            <Button className='flex items-center gap-2 cursor-pointer'>
+            <Button
+              className='flex items-center gap-2 cursor-pointer'
+              onClick={() => setIsImportDialogOpen(true)}
+            >
               <FileInput className='h-4 w-4' /> Import Bills
             </Button>
           </div>
@@ -182,9 +241,7 @@ const AdminDashboard = () => {
 
         <div className='bg-white shadow rounded-lg p-6'>
           <div className='flex justify-between items-center mb-4'>
-            <h2 className='text-lg font-semibold'>
-              Invoices ({invoices.length})
-            </h2>
+            <h2 className='text-lg font-semibold'>Invoices</h2>
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
               className='flex items-center gap-2 cursor-pointer'
@@ -205,15 +262,38 @@ const AdminDashboard = () => {
             </div>
           ) : (
             <InvoiceTable
-              invoices={invoices}
+              invoices={paginatedInvoices}
               employees={employees}
               onAssign={handleAssign}
               onOpenUpdateAssignDialog={handleOpenUpdateAssignDialog}
             />
           )}
+          <div className='flex  justify-between mt-4'>
+            <p className='text-lg font-semibold mr-2'>
+              Page: of Total: {paginatedInvoices.length}
+            </p>
+            <div className='flex items-center gap-2'>
+              <Button
+                onClick={goToPrevious}
+                disabled={currentPage === 1}
+                className='flex items-center gap-2 cursor-pointer'
+              >
+                <ChevronDown className='h-4 w-4 rotate-90' /> Previous
+              </Button>
+              <p className='text-sm'>
+                Page {currentPage} of {Math.ceil(invoices.length / pageSize)}
+              </p>
+              <Button
+                onClick={goToNext}
+                disabled={currentPage === totalPages}
+                className='flex items-center gap-2 cursor-pointer'
+              >
+                Next <ChevronDown className='h-4 w-4 -rotate-90' />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
-
       <AssignDialog
         invoice={selectedInvoice}
         open={isDialogOpen}
@@ -229,6 +309,10 @@ const AdminDashboard = () => {
       <CreateInvoiceDialog
         open={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}
+      />
+      <ImportDataDialog
+        open={isImportDialogOpen}
+        onClose={() => setIsImportDialogOpen(false)}
       />
     </Layout>
   );

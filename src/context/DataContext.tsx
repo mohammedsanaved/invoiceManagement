@@ -39,7 +39,7 @@ interface DataContextType {
   userBillsLoading: boolean;
   userBillsError: string | null;
   fetchUserInvoices: () => Promise<void>; // Function to fetch user invoices
-  fetchInvoices: () => Promise<void>; // Function to fetch invoices
+  fetchInvoices: (invoiceNumber?: string) => Promise<void>; // Function to fetch invoices
   refreshUserInvoices: () => Promise<void>; // Add refreshUserInvoices to the context type
 }
 
@@ -62,37 +62,33 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
   const { toast } = useToast();
 
   // Centralized function to fetch invoices
-  const fetchInvoices = async () => {
+  const fetchInvoices = async (invoiceNumber?: string) => {
     try {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem('accessToken');
+      if (!token) throw new Error('No access token found');
 
-      if (!token) {
-        throw new Error('No access token found');
+      // Build URL: if invoiceNumber is present, append query param
+      let url = `${API_URL}/api/bills/`;
+      if (invoiceNumber && invoiceNumber.trim().length > 0) {
+        const encoded = encodeURIComponent(invoiceNumber.trim());
+        url += `?invoice_number=${encoded}`;
       }
 
-      const response = await axios.get<Invoice[]>(`${API_URL}/api/bills/`, {
+      const response = await axios.get<Invoice[]>(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
       setInvoices(response.data);
-      console.log(
-        'Fetched invoices------------------------------:',
-        response.data
-      );
-    } catch (error: unknown) {
-      let message = 'Failed to fetch invoices';
-      if (error instanceof Error) {
-        message = error.message;
-      }
-      console.error('Failed to fetch invoices:', error);
-      setError(message);
+    } catch (err: unknown) {
+      let msg = 'Failed to fetch invoices';
+      if (err instanceof Error) msg = err.message;
+      setError(msg);
       toast({
         title: 'Error',
-        description: 'Unable to fetch invoices.',
+        description: msg,
         variant: 'destructive',
       });
     } finally {

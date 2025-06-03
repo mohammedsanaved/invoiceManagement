@@ -14,12 +14,16 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useData } from '@/context/DataContext';
+import { Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const { login } = useAuth();
+
   const { toast } = useToast();
   const navigate = useNavigate();
   const { refreshInvoices, refreshUserInvoices } = useData();
@@ -97,14 +101,29 @@ const Login = () => {
             </div>
             <div className='space-y-2'>
               <Label htmlFor='password'>Password</Label>
-              <Input
-                id='password'
-                type='password'
-                placeholder='admin123 or employee123'
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className='relative'>
+                <Input
+                  id='password'
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder='admin123 or employee123'
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className='pr-10' // ensures space for icon
+                />
+                <button
+                  type='button'
+                  onClick={() => setShowPassword(!showPassword)}
+                  className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
+                >
+                  {showPassword ? (
+                    <EyeOff className='h-4 w-4' />
+                  ) : (
+                    <Eye className='h-4 w-4' />
+                  )}
+                </button>
+              </div>
             </div>
+
             <Button type='submit' className='w-full' disabled={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>

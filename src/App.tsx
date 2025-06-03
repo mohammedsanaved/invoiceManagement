@@ -13,6 +13,7 @@ import UserDashboard from './pages/UserDashboard';
 import NotFoundPage from './pages/NotFoundPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import Index from './pages/Index';
+import AdminPaymentDashboard from './pages/AdminPaymentDashboard';
 
 // const queryClient = new QueryClient();
 
@@ -33,6 +34,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/admin/payments'
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminPaymentDashboard />
                 </ProtectedRoute>
               }
             />
