@@ -167,7 +167,12 @@ const UserDashboard: React.FC = () => {
       await fetchUserInvoices();
 
       // If fully paid, show success
-      if (values.amount >= Number(selectedInvoice.actual_amount)) {
+      if (
+        values.amount >=
+        Number(
+          selectedInvoice.remaining_amount || selectedInvoice.actual_amount
+        )
+      ) {
         setSuccessDialogOpen(true);
       }
     } catch (error: unknown) {
@@ -358,10 +363,10 @@ const UserDashboard: React.FC = () => {
                         component='div'
                         className='text-red-500 text-sm mt-1'
                       />
-                      <div className='text-xs text-gray-500 mt-1'>
+                      {/* <div className='text-xs text-gray-500 mt-1'>
                         Maximum amount: ₹
                         {Number(selectedInvoice.actual_amount).toFixed(2)}
-                      </div>
+                      </div> */}
                     </div>
                   </div>
 

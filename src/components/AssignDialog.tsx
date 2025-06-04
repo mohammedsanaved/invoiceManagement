@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
-// import { ref } from 'process';
 
 interface AssignDialogProps {
   invoice: Invoice | null;
@@ -29,6 +28,7 @@ interface AssignDialogProps {
   onAssign: () => void;
   refreshInvoices: () => void;
 }
+
 interface Employee {
   id: number;
   full_name: string;
@@ -44,16 +44,28 @@ const AssignDialog: React.FC<AssignDialogProps> = ({
   onAssign,
   refreshInvoices,
 }) => {
-  console.log(invoice, '-----------------------Invoice');
+  // If there is no invoice, render nothing:
+  const originalAmount = invoice?.actual_amount;
+  const originalAssignedTo = invoice?.assigned_to_id ?? null;
+  const [amount, setAmount] = useState<number | undefined>(originalAmount);
   const [employees, setEmployees] = useState<Employee[]>([]);
+
+  // Keep a copy of the original values for comparison:
+
+  // Local state for any edits:
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
-    null
+    originalAssignedTo
   );
+
+  // List of employees to choose from:
+
+  // When the dialog opens (or invoice changes), initialize form fields:
   useEffect(() => {
-    if (invoice?.assigned_to_id) {
-      setSelectedEmployeeId(invoice.assigned_to_id);
-    }
+    setSelectedEmployeeId(originalAssignedTo);
+    setAmount(originalAmount);
   }, [invoice]);
+
+  // Fetch all employees once:
   useEffect(() => {
     const fetchEmployee = async () => {
       const token = localStorage.getItem('accessToken');
@@ -76,34 +88,44 @@ const AssignDialog: React.FC<AssignDialogProps> = ({
 
     fetchEmployee();
   }, []);
-  console.log(employees, '-----------------------Employee');
 
   if (!invoice) return null;
-
   const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem('accessToken');
-    if (!token || !invoice?.id || selectedEmployeeId === null) return;
+    if (!token || !invoice.id) return;
 
-    // console.log('invoiceId', invoice?.id, 'selectedID', selectedEmployeeId);
+    // Build payload with only fields that have actually changed:
+    const payload: Record<string, number | undefined> = {};
+
+    if (selectedEmployeeId !== originalAssignedTo) {
+      payload.assigned_to_id = selectedEmployeeId ?? undefined;
+    }
+
+    if (amount !== originalAmount) {
+      payload.actual_amount = amount;
+    }
+
+    // If nothing changed, simply close the dialog:
+    if (Object.keys(payload).length === 0) {
+      onClose();
+      return;
+    }
 
     try {
-      await axios.patch(
-        `${API_URL}/api/bills/${invoice.id}/`,
-        {
-          assigned_to_id: selectedEmployeeId,
+      await axios.patch(`${API_URL}/api/bills/${invoice.id}/`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      });
+
+      // Refresh parent data and notify:
       onClose();
       refreshInvoices();
-      onAssign(); // Call the onAssign function to notify parent component
+      onAssign();
     } catch (error: unknown) {
-      console.error('Error assigning employee:', error);
+      console.error('Error updating invoice:', error);
     }
   };
 
@@ -112,55 +134,75 @@ const AssignDialog: React.FC<AssignDialogProps> = ({
       <DialogContent className='sm:max-w-lg'>
         <form onSubmit={handleAssign}>
           <DialogHeader>
-            <DialogTitle>Assign Invoice for Collection</DialogTitle>
+            <DialogTitle>Assign / Update Invoice</DialogTitle>
             <DialogDescription>
-              This will notify the employee about this collection task.
+              You may change the assigned employee and/or adjust the amount.
             </DialogDescription>
           </DialogHeader>
+
           <div className='grid gap-4 py-4'>
+            {/* Invoice Number (read-only) */}
             <div className='grid grid-cols-4 items-center gap-4'>
               <Label className='text-right'>Invoice</Label>
               <div className='col-span-3'>
                 <Input value={invoice.invoice_number} readOnly />
               </div>
             </div>
+
+            {/* Outlet (read-only) */}
             <div className='grid grid-cols-4 items-center gap-4'>
               <Label className='text-right'>Outlet</Label>
               <div className='col-span-3'>
                 <Input value={invoice.outlet_name} readOnly />
               </div>
             </div>
+
+            {/* Amount (editable) */}
             <div className='grid grid-cols-4 items-center gap-4'>
               <Label className='text-right'>Amount</Label>
               <div className='col-span-3'>
-                <Input value={invoice.actual_amount} readOnly />
+                <Input
+                  type='number'
+                  value={amount}
+                  onChange={(e) => setAmount(Number(e.target.value))}
+                  min='0'
+                  step='0.01'
+                />
               </div>
             </div>
+
+            {/* Assign To (select) */}
             <div className='grid grid-cols-4 items-center gap-4'>
               <Label className='text-right'>Assign To</Label>
-              <Select
-                value={selectedEmployeeId?.toString()}
-                onValueChange={(value) => setSelectedEmployeeId(Number(value))}
-              >
-                <SelectTrigger className='col-span-3'>
-                  <SelectValue placeholder='Select Employee' />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id.toString()}>
-                      {emp.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className='col-span-3'>
+                <Select
+                  value={selectedEmployeeId?.toString() ?? ''}
+                  onValueChange={(val) => {
+                    // when user chooses “none,” val==='' so convert to null
+                    setSelectedEmployeeId(val === '' ? null : Number(val));
+                  }}
+                >
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Select Employee' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees.map((emp) => (
+                      <SelectItem key={emp.id} value={emp.id.toString()}>
+                        {emp.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
+
           <DialogFooter>
             <Button type='button' variant='outline' onClick={onClose}>
               Cancel
             </Button>
-            <Button className='cursor-pointer' type='submit'>
-              Assign Invoice
+            <Button type='submit' className='cursor-pointer'>
+              Save Changes
             </Button>
           </DialogFooter>
         </form>

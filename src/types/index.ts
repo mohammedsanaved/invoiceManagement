@@ -36,6 +36,7 @@ export interface SimpleBill {
   invoice_date: string;
   actual_amount: string;
   brand: string;
+  remaining_amount?: string;
   status: string;
   overdue_days: number;
   route_id: number;
