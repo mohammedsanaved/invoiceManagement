@@ -22,7 +22,7 @@ interface Payment {
 
 const PaymentTable = ({ payments }: { payments: Payment[] }) => {
   return (
-    <Table>
+    <Table className='mt-4'>
       <TableHeader>
         <TableRow>
           <TableHead>Route Name</TableHead>
@@ -35,11 +35,6 @@ const PaymentTable = ({ payments }: { payments: Payment[] }) => {
           <TableHead>Cheque Date</TableHead>
 
           <TableHead>Amount</TableHead>
-          {/* <TableHead>Overdue Days</TableHead> */}
-          {/* <TableHead>Brand</TableHead> */}
-          {/* <TableHead>Assign To</TableHead> */}
-          {/* <TableHead>Status</TableHead> */}
-          {/* <TableHead>Action</TableHead> */}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -48,7 +43,7 @@ const PaymentTable = ({ payments }: { payments: Payment[] }) => {
           //   const selectedEmployeeId = selectedAssignments[payment.id];
 
           return (
-            <TableRow key={payment.id}>
+            <TableRow key={payment.id} className='p-2'>
               <TableCell>{payment.route_name}</TableCell>
               <TableCell>{payment.outlet_name}</TableCell>
               <TableCell>{payment.invoice_number}</TableCell>
@@ -73,77 +68,7 @@ const PaymentTable = ({ payments }: { payments: Payment[] }) => {
                   : 'Invalid'}
               </TableCell>
               <TableCell>{payment.cheque_date || '-'}</TableCell>
-
               <TableCell>{payment.amount}</TableCell>
-              {/* <TableCell>{payment.overdue_days}</TableCell> */}
-              {/* <TableCell>{payment.brand}</TableCell> */}
-              {/* <TableCell>
-                            <Select
-                              value={
-                                selectedEmployeeId
-                                  ? String(selectedEmployeeId)
-                                  : isAssigned
-                                  ? String(payment.assigned_to_id)
-                                  : ''
-                              }
-                              disabled={isAssigned}
-                              onValueChange={(value) =>
-                                handleSelectChange(payment.id, parseInt(value))
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select Employee' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {employees.map((emp) => (
-                                  <SelectItem key={emp.id} value={String(emp.id)}>
-                                    {emp.full_name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell> */}
-
-              {/* <TableCell>
-                            <span
-                              className={`${
-                                payment.status === 'cleared'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              } px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(
-                                payment.status
-                              )}`}
-                            >
-                              {payment.status}
-                            </span>
-                          </TableCell> */}
-
-              {/* <TableCell>
-                        {isAssigned ? (
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            className='cursor-pointer'
-                            onClick={
-                              () => onOpenUpdateAssignDialog(payment)
-                              // Uncomment the line below if you want to handle assignment updates
-                              // directly in this component instead of opening a dialog
-                            }
-                          >
-                            Update
-                          </Button>
-                        ) : (
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            className='cursor-pointer'
-                            disabled={!selectedEmployeeId}
-                            onClick={() => onAssign(payment.id, selectedEmployeeId!)}
-                          >
-                            Assign
-                          </Button>
-                        )}
-                      </TableCell> */}
             </TableRow>
           );
         })}

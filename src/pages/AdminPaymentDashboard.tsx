@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Layout from '@/components/Layout';
 import PaymentTable from '@/components/PaymentTable';
 import ExportPaymentDataDialog from '@/components/ExportPaymentDataDialog';
@@ -9,7 +9,7 @@ import axios from 'axios';
 import { ChevronDown, ChevronLeft, Outdent, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const AdminPaymentDashboard = () => {
+const AdminPaymentDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -20,21 +20,26 @@ const AdminPaymentDashboard = () => {
 
   const [searchInvoiceTerm, setSearchInvoiceTerm] = useState('');
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [noResults, setNoResults] = useState(false);
 
-  // Total pages based on the current `payments` array
+  // We'll keep a ref to the current debounce timer:
+  const debounceRef = useRef<number | null>(null);
+
+  // Compute total pages
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(payments.length / pageSize));
   }, [payments.length, pageSize]);
 
-  // Slice out the payments for the visible page
+  // Slice out just the page we need
   const paginatedPayments = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     return payments.slice(startIndex, startIndex + pageSize);
   }, [payments, currentPage, pageSize]);
 
   /**
-   * Fetch payments from the API. If `invoiceNumber` is provided (non-empty),
-   * we append `?invoice_number=` to the URL.
+   * Fetch payments from the API.
+   * If `invoiceNumber` is provided (non‐empty),
+   * append `?invoice_number=` to the URL.
    */
   const fetchPayments = async (invoiceNumber?: string) => {
     const token = localStorage.getItem('accessToken');
@@ -46,14 +51,17 @@ const AdminPaymentDashboard = () => {
 
       let url = `${API_URL}/api/payments/`;
       if (invoiceNumber && invoiceNumber.trim().length > 0) {
-        url += `?invoice_number=${encodeURIComponent(invoiceNumber.trim())}`;
+        const encoded = encodeURIComponent(invoiceNumber.trim());
+        url += `?invoice_number=${encoded}`;
       }
 
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setPayments(response.data || []);
+      const data = response.data || [];
+      setPayments(data);
+      setNoResults(invoiceNumber !== '' && data.length === 0);
     } catch (err: unknown) {
       console.error('Failed to fetch payments:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch payments');
@@ -62,14 +70,68 @@ const AdminPaymentDashboard = () => {
     }
   };
 
-  // On mount: load all payments (no filter)
+  // On mount, fetch all payments:
   useEffect(() => {
     fetchPayments();
   }, []);
 
-  // Called when user clicks the Search button
-  const handleSearch = () => {
-    fetchPayments(searchInvoiceTerm);
+  // Whenever `searchInvoiceTerm` changes, debounce for 500ms before fetching
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    // If the field is blank, fetch all immediately (no search term)
+    if (searchInvoiceTerm.trim() === '') {
+      // Avoid waiting the full debounce delay—clear “noResults” and fetch immediately
+      setNoResults(false);
+      fetchPayments();
+      setCurrentPage(1);
+      return;
+    }
+
+    // Otherwise, wait 500ms before fetching
+    debounceRef.current = window.setTimeout(() => {
+      fetchPayments(searchInvoiceTerm.trim());
+      setCurrentPage(1);
+    }, 500);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchInvoiceTerm]);
+
+  // If user presses Enter, fire fetch immediately (no debounce)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      const term = searchInvoiceTerm.trim();
+      if (term === '') {
+        setNoResults(false);
+        fetchPayments();
+      } else {
+        fetchPayments(term);
+      }
+      setCurrentPage(1);
+    }
+  };
+
+  // Manual “Search” button click (in case user wants to avoid waiting 500 ms)
+  const handleSearchClick = () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    const term = searchInvoiceTerm.trim();
+    if (term === '') {
+      setNoResults(false);
+      fetchPayments();
+    } else {
+      fetchPayments(term);
+    }
     setCurrentPage(1);
   };
 
@@ -115,27 +177,30 @@ const AdminPaymentDashboard = () => {
 
   return (
     <Layout>
-      <div className='max-w-7xl mx-auto p-4 sm:p-6 lg:p-8'>
-        {/* Header: Title, Search bar, and Export button */}
+      <div className='max-w-7xl mx-auto'>
+        {/* Header: Title, Search bar, Back button, Export */}
         <div className='flex flex-col sm:flex-row items-center justify-between gap-2 pb-4'>
           <h1 className='text-2xl font-bold'>Admin Payment Dashboard</h1>
 
           <div className='flex w-full sm:w-auto items-center gap-2'>
             <Input
+              className='w-full sm:w-64'
               placeholder='Search by Invoice Number'
               value={searchInvoiceTerm}
               onChange={(e) => setSearchInvoiceTerm(e.target.value)}
+              onKeyDown={handleKeyDown}
             />
-            <Button onClick={handleSearch}>
+            <Button onClick={handleSearchClick}>
               <Search className='h-4 w-4' />
             </Button>
           </div>
+
           <div className='flex items-center gap-2'>
             <Button
               variant='outline'
               size='sm'
               onClick={() => navigate('/admin')}
-              className='flex items-center gap-1 cursor-pointer'
+              className='flex items-center gap-1'
             >
               <ChevronLeft className='h-4 w-4' /> Back
             </Button>
@@ -157,7 +222,23 @@ const AdminPaymentDashboard = () => {
 
           {payments.length === 0 ? (
             <div className='text-center py-8'>
-              <p className='text-gray-500'>No payments found</p>
+              <p className='text-gray-500'>
+                {noResults
+                  ? `No payments found for "${searchInvoiceTerm}"`
+                  : 'No payments found'}
+              </p>
+              {noResults && (
+                <Button
+                  onClick={() => {
+                    setSearchInvoiceTerm('');
+                    setNoResults(false);
+                    fetchPayments();
+                    setCurrentPage(1);
+                  }}
+                >
+                  Clear Search
+                </Button>
+              )}
             </div>
           ) : (
             <PaymentTable payments={paginatedPayments} />

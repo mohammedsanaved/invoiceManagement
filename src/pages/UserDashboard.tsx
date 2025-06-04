@@ -5,6 +5,7 @@ import { Formik, Form, Field, ErrorMessage, type FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
 import type { SimpleBill } from '../types';
+import { useToast } from '../hooks/use-toast';
 import {
   Table,
   TableBody,
@@ -36,6 +37,7 @@ import { API_URL } from '@/lib/url';
 const UserDashboard: React.FC = () => {
   const { userBills, userBillsLoading, userBillsError, fetchUserInvoices } =
     useData();
+  const { toast } = useToast();
 
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<SimpleBill | null>(
@@ -144,7 +146,7 @@ const UserDashboard: React.FC = () => {
       }
 
       const token = window.localStorage.getItem('accessToken');
-      await axios.post(
+      const response = await axios.post(
         `${API_URL}/api/payments/${selectedInvoice.id}/payments/`,
         payload,
         {
@@ -154,6 +156,8 @@ const UserDashboard: React.FC = () => {
           },
         }
       );
+
+      console.log('Payment recorded successfully:', response);
 
       // Close dialog & reset form
       setIsPaymentDialogOpen(false);
@@ -170,13 +174,23 @@ const UserDashboard: React.FC = () => {
       console.error('Failed to record payment:', error);
       if (axios.isAxiosError(error)) {
         if (error.response) {
-          alert(
-            `Payment failed: ${error.response.data.message || 'Server error'}`
-          );
+          toast({
+            title: 'Payment failed',
+            description: error.response.data.amount[0] || 'Server error',
+            variant: 'destructive',
+          });
         } else if (error.request) {
-          alert('Payment failed: Network error. Please check your connection.');
+          toast({
+            title: 'Payment failed',
+            description: 'Network error. Please check your connection.',
+            variant: 'destructive',
+          });
         } else {
-          alert(`Payment failed: ${error.message}`);
+          toast({
+            title: 'Payment failed',
+            description: error.message,
+            variant: 'destructive',
+          });
         }
       } else {
         alert('Payment failed: Unknown error occurred');
@@ -457,7 +471,7 @@ const UserDashboard: React.FC = () => {
                             as={Input}
                             name='cheque_date'
                             type='date'
-                            max={new Date().toISOString().split('T')[0]}
+                            // max={new Date().toISOString().split('T')[0]}
                           />
                           <ErrorMessage
                             name='cheque_date'

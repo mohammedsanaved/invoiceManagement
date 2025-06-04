@@ -94,7 +94,7 @@ export default function CreateInvoiceDialog({
   const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
   const [date, setDate] = useState<Date | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // const [openPop, setOpenPop] = useState(false);
+  const [openCal, setOpenCal] = useState(false);
   // const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch all routes when dialog opens
@@ -388,7 +388,7 @@ export default function CreateInvoiceDialog({
                   Invoice Date
                 </Label>
                 <div className='col-span-3'>
-                  <Popover>
+                  <Popover open={openCal} onOpenChange={setOpenCal}>
                     <PopoverTrigger asChild>
                       <Button
                         variant='outline'
@@ -412,6 +412,7 @@ export default function CreateInvoiceDialog({
                           if (selected) {
                             const formatted = format(selected, 'yyyy-MM-dd');
                             setFieldValue('invoice_date', formatted);
+                            setOpenCal(false);
                           }
                         }}
                         initialFocus

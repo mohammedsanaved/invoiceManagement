@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import type { Invoice } from '../types';
@@ -8,14 +8,12 @@ import {
   ChevronDown,
   FileInput,
   Outdent,
-  // Outdent,
   Plus,
   Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InvoiceTable from '../components/InvoiceTable';
 import AssignDialog from '../components/AssignDialog';
-// import CreateInvoiceDialog from '../components/CreateInvoiceDialog';
 import axios from 'axios';
 import { API_URL } from '@/lib/url';
 import { useToast } from '../hooks/use-toast';
@@ -32,17 +30,18 @@ interface Employee {
   role: string;
   is_admin: boolean;
 }
+
 const AdminDashboard = () => {
   const { currentUser } = useAuth();
   const {
     invoices,
-    // assignInvoice,
     sendNotification,
     loading,
     error,
     refreshInvoices,
     fetchInvoices,
   } = useData();
+
   const pageSize = 10;
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -53,23 +52,80 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [noResults, setNoResults] = useState(false);
   const { toast } = useToast();
 
+  // A ref to store a debounce timer
+  const debounceRef = useRef<number | null>(null);
+
+  // Fetch employee list on mount
+  useEffect(() => {
+    const fetchEmployee = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+      try {
+        const response = await axios.get(`${API_URL}/api/auth/users/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setEmployees(response.data);
+      } catch (err) {
+        console.error('Error fetching employee:', err);
+      }
+    };
+    fetchEmployee();
+  }, []);
+
+  // Debounced search: whenever `searchTerm` changes, wait 500ms then call fetchInvoices
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = window.setTimeout(() => {
+      fetchAndHandle(searchTerm.trim());
+    }, 500);
+
+    // Clean up if searchTerm changes or component unmounts
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchTerm]);
+
+  // Wrapper to call fetchInvoices with optional invoice_number, then track if there were no results
+  const fetchAndHandle = async (term: string) => {
+    try {
+      if (term) {
+        await fetchInvoices(term);
+      } else {
+        await fetchInvoices(undefined);
+      }
+      // After fetch completes, if `invoices` array is empty while term is non-empty → no results
+      setNoResults(term !== '' && invoices.length === 0);
+    } catch {
+      // swallow; DataContext’s fetchInvoices already handles errors
+    }
+  };
+
+  // If user presses “Enter” inside the input, fire an immediate fetch
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      fetchAndHandle(searchTerm.trim());
+      setCurrentPage(1);
+    }
+  };
+
   const totalPages = useMemo(() => {
-    return Math.ceil(invoices.length / pageSize);
+    return Math.ceil(invoices.length / pageSize) || 1;
   }, [invoices.length]);
 
   const paginatedInvoices: Invoice[] = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return invoices.slice(startIndex, endIndex);
+    return invoices.slice(startIndex, startIndex + pageSize);
   }, [invoices, currentPage]);
-
-  const handleSearch = () => {
-    // Trigger fetchInvoices with the searchTerm filter
-    fetchInvoices(searchTerm.trim() || undefined);
-    setCurrentPage(1);
-  };
 
   const goToPrevious = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -80,38 +136,16 @@ const AdminDashboard = () => {
 
   const handleOpenUpdateAssignDialog = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
-    setIsDialogOpen(true); // Open the dialog
-    // console.log(selectedInvoice, '--------------------------Selected Invoice');
+    setIsDialogOpen(true);
   };
 
-  useEffect(() => {
-    const fetchEmployee = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
-
-      try {
-        const response = await axios.get(`${API_URL}/api/auth/users/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setEmployees(response.data);
-      } catch (error: unknown) {
-        console.error('Error fetching employee:', error);
-      }
-    };
-
-    fetchEmployee();
-  }, []);
-
-  // Show loading state from DataContext
   if (loading) {
     return (
       <Layout>
         <div className='max-w-7xl mx-auto'>
           <div className='flex items-center justify-center min-h-[400px]'>
             <div className='text-center'>
-              <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto mb-4'></div>
+              <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto mb-4' />
               <p className='text-gray-600'>Loading invoices...</p>
             </div>
           </div>
@@ -120,7 +154,6 @@ const AdminDashboard = () => {
     );
   }
 
-  // Show error state from DataContext
   if (error) {
     return (
       <Layout>
@@ -141,10 +174,9 @@ const AdminDashboard = () => {
   const handleAssign = async (invoiceId: number, employeeId: number) => {
     try {
       const token = localStorage.getItem('accessToken');
-      console.log(employeeId, '-------------employee');
-      console.log(invoiceId, '--------------DataFromAssign');
+      if (!token) return;
 
-      const response = await axios.post(
+      await axios.post(
         `${API_URL}/api/bills/${invoiceId}/assign/`,
         {
           bill_ids: [invoiceId],
@@ -158,83 +190,78 @@ const AdminDashboard = () => {
         }
       );
       await refreshInvoices();
-
-      console.log('Assignment response:', response.data);
-      // await sendNotification(
-      //   'admin',
-      //   'Invoice Assignment Confirmation',
-      //   `Invoice ${invoice.invoice_number} has been assigned to ${
-      //     employees.find((emp) => emp.id === employeeId)?.full_name
-      //   } for collection.`
-      // );
       toast({
         title: 'Invoice Assigned',
         description: `Invoice ${invoiceId} has been assigned successfully.`,
       });
-      // Optional: Show success message or refetch invoices
-    } catch (error) {
-      console.error('Error assigning invoice:', error);
-      // Optional: show error message to user
+    } catch (err) {
+      console.error('Error assigning invoice:', err);
     }
   };
 
   const handleConfirmAssign = async () => {
     if (!selectedInvoice || !currentUser) return;
-
-    // Always assign to user ID 2 (employee) in this demo
-    // assignInvoice(selectedInvoice.id, 2);
-
-    // Send notification emails
     await sendNotification(
       'employee1@example.com',
       'New Collection Assignment',
       `You have been assigned to collect invoice ${selectedInvoice.invoice_number} for $${selectedInvoice.actual_amount}`
     );
-
     await sendNotification(
       'admin@example.com',
       'Invoice Assignment Confirmation',
       `Invoice ${selectedInvoice.invoice_number} has been assigned to Employee One for collection.`
     );
-
     setIsDialogOpen(false);
   };
 
   return (
     <Layout>
       <div className='max-w-7xl mx-auto'>
-        <div className='flex sm:flex-row flex-col pb-4 justify-between gap-2 items-center'>
+        <div className='flex flex-col sm:flex-row pb-4 justify-between gap-2 items-center'>
           <h1 className='text-2xl font-bold mb-2'>Admin Dashboard</h1>
+
+          {/* Search bar (full width on small screens) */}
           <div className='flex w-full sm:w-auto items-center gap-2'>
-            {/* ←— Search input + button */}
             <Input
+              className='w-full sm:w-64'
               placeholder='Search by Invoice Number'
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              onKeyDown={handleKeyDown}
             />
-            <Button onClick={handleSearch}>
+            <Button
+              onClick={() => {
+                fetchAndHandle(searchTerm.trim());
+                setCurrentPage(1);
+              }}
+            >
               <Search className='h-4 w-4' />
             </Button>
           </div>
+
           <div className='flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow'>
             <Link to='/admin/payments'>
-              <Button className='flex items-center gap-2 cursor-pointer'>
-                Payments History
+              <Button size={'sm'} className='flex items-center gap-2'>
+                Pay History
                 <ArrowUpRight className='h-4 w-4' />
-                {/* <DatePickerWithRange className='bg-white' /> */}
               </Button>
             </Link>
             <Button
-              className='flex items-center gap-2 cursor-pointer'
+              size={'sm'}
+              className='flex items-center gap-2'
               onClick={() => setIsExportDialogOpen(true)}
             >
               <Outdent className='h-4 w-4' /> Export Bills
             </Button>
             <Button
-              className='flex items-center gap-2 cursor-pointer'
+              size={'sm'}
+              className='flex items-center gap-2'
               onClick={() => setIsImportDialogOpen(true)}
             >
-              <FileInput className='h-4 w-4' /> Import Bills
+              <FileInput className='h-4 w-4' /> Imports Payments
             </Button>
           </div>
         </div>
@@ -244,7 +271,7 @@ const AdminDashboard = () => {
             <h2 className='text-lg font-semibold'>Invoices</h2>
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
-              className='flex items-center gap-2 cursor-pointer'
+              className='flex items-center gap-2'
             >
               <Plus className='h-4 w-4' /> Create New Invoice
             </Button>
@@ -252,13 +279,30 @@ const AdminDashboard = () => {
 
           {invoices.length === 0 ? (
             <div className='text-center py-8'>
-              <p className='text-gray-500 mb-4'>No invoices found</p>
-              <Button
-                onClick={() => setIsCreateDialogOpen(true)}
-                className='flex items-center gap-2 mx-auto'
-              >
-                <Plus className='h-4 w-4' /> Create Your First Invoice
-              </Button>
+              <p className='text-gray-500 mb-4'>
+                {noResults
+                  ? `No invoices found for “${searchTerm}”`
+                  : 'No invoices found'}
+              </p>
+              {noResults && (
+                <Button
+                  onClick={() => {
+                    setSearchTerm('');
+                    fetchAndHandle('');
+                    setCurrentPage(1);
+                  }}
+                >
+                  Clear Search
+                </Button>
+              )}
+              {!noResults && (
+                <Button
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  className='flex items-center gap-2 mx-auto'
+                >
+                  <Plus className='h-4 w-4' /> Create Your First Invoice
+                </Button>
+              )}
             </div>
           ) : (
             <InvoiceTable
@@ -268,25 +312,26 @@ const AdminDashboard = () => {
               onOpenUpdateAssignDialog={handleOpenUpdateAssignDialog}
             />
           )}
-          <div className='flex  justify-between mt-4'>
+
+          <div className='flex justify-between items-center mt-4'>
             <p className='text-lg font-semibold mr-2'>
-              Page: of Total: {paginatedInvoices.length}
+              Total: {invoices.length}
             </p>
             <div className='flex items-center gap-2'>
               <Button
                 onClick={goToPrevious}
                 disabled={currentPage === 1}
-                className='flex items-center gap-2 cursor-pointer'
+                className='flex items-center gap-1'
               >
                 <ChevronDown className='h-4 w-4 rotate-90' /> Previous
               </Button>
               <p className='text-sm'>
-                Page {currentPage} of {Math.ceil(invoices.length / pageSize)}
+                Page {currentPage} of {totalPages}
               </p>
               <Button
                 onClick={goToNext}
                 disabled={currentPage === totalPages}
-                className='flex items-center gap-2 cursor-pointer'
+                className='flex items-center gap-1'
               >
                 Next <ChevronDown className='h-4 w-4 -rotate-90' />
               </Button>
@@ -294,6 +339,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
       <AssignDialog
         invoice={selectedInvoice}
         open={isDialogOpen}
@@ -305,7 +351,6 @@ const AdminDashboard = () => {
         open={isExportDialogOpen}
         onClose={() => setIsExportDialogOpen(false)}
       />
-
       <CreateInvoiceDialog
         open={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}

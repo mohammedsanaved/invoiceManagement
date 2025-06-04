@@ -34,6 +34,8 @@ const ExportDataDialog: React.FC<ExportDataDialogProps> = ({
 }) => {
   const [startDateObj, setStartDateObj] = useState<Date | undefined>();
   const [endDateObj, setEndDateObj] = useState<Date | undefined>();
+  const [openStart, setOpenStart] = useState(false);
+  const [openEnd, setOpenEnd] = useState(false);
 
   /** We require two dates; end_date must be ≥ start_date */
   const validationSchema = Yup.object<Partial<FormValues>>({
@@ -139,7 +141,7 @@ const ExportDataDialog: React.FC<ExportDataDialogProps> = ({
                   Start Date
                 </Label>
                 <div className='col-span-3'>
-                  <Popover>
+                  <Popover open={openStart} onOpenChange={setOpenStart}>
                     <PopoverTrigger asChild>
                       <Button
                         variant='outline'
@@ -161,6 +163,7 @@ const ExportDataDialog: React.FC<ExportDataDialogProps> = ({
                           if (selected) {
                             const formatted = format(selected, 'yyyy-MM-dd');
                             setFieldValue('start_date', formatted);
+                            setOpenStart(false);
                           }
                         }}
                         initialFocus
@@ -181,7 +184,7 @@ const ExportDataDialog: React.FC<ExportDataDialogProps> = ({
                   End Date
                 </Label>
                 <div className='col-span-3'>
-                  <Popover>
+                  <Popover open={openEnd} onOpenChange={setOpenEnd}>
                     <PopoverTrigger asChild>
                       <Button
                         variant='outline'
@@ -203,6 +206,7 @@ const ExportDataDialog: React.FC<ExportDataDialogProps> = ({
                           if (selected) {
                             const formatted = format(selected, 'yyyy-MM-dd');
                             setFieldValue('end_date', formatted);
+                            setOpenEnd(false);
                           }
                         }}
                         initialFocus
