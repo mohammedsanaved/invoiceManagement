@@ -5,11 +5,14 @@ import type { Invoice } from '../types';
 import Layout from '../components/Layout';
 import {
   ArrowUpRight,
+  Banknote,
   ChevronDown,
+  CreditCard,
   FileInput,
   Outdent,
   Plus,
   Search,
+  Wallet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InvoiceTable from '../components/InvoiceTable';
@@ -22,6 +25,7 @@ import CreateInvoiceDialog from '@/components/CreateInvoiceDialog';
 import { Link } from 'react-router-dom';
 import ImportDataDialog from '@/components/ImportDataDialog';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Employee {
   id: number;
@@ -29,6 +33,12 @@ interface Employee {
   full_name: string;
   role: string;
   is_admin: boolean;
+}
+interface PaymentTotals {
+  cash_total: string;
+  upi_total: string;
+  cheque_total: string;
+  date?: string;
 }
 
 const AdminDashboard = () => {
@@ -50,9 +60,17 @@ const AdminDashboard = () => {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-
   const [searchTerm, setSearchTerm] = useState('');
   const [noResults, setNoResults] = useState(false);
+  const [paymentTotals, setPaymentTotals] = useState<PaymentTotals>({
+    cash_total: '0',
+    upi_total: '0',
+    cheque_total: '0',
+  });
+  const [loadingTotalPayments, setLoadingTotalPayments] = useState(false);
+  const [errorTotalPayments, setErrorTotalPayments] = useState<string | null>(
+    null
+  );
   const { toast } = useToast();
 
   // A ref to store a debounce timer
@@ -73,6 +91,35 @@ const AdminDashboard = () => {
       }
     };
     fetchEmployee();
+  }, []);
+
+  useEffect(() => {
+    const fetchTodaysTotalCollection = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      try {
+        setLoadingTotalPayments(true);
+        const response = await axios.get(
+          `${API_URL}/api/payments/today-totals/`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setPaymentTotals(response.data);
+        // Assuming response.data contains the total collection amount
+        // You can store it in a state or use it directly
+        console.log("Today's total collection:", response.data);
+      } catch (err) {
+        console.error("Error fetching today's total collection:", err);
+        setErrorTotalPayments(
+          err instanceof Error ? err.message : 'Failed to Total Payments'
+        );
+      } finally {
+        setLoadingTotalPayments(false);
+      }
+    };
+    fetchTodaysTotalCollection();
   }, []);
 
   // Debounced search: whenever `searchTerm` changes, wait 500ms then call fetchInvoices
@@ -139,7 +186,7 @@ const AdminDashboard = () => {
     setIsDialogOpen(true);
   };
 
-  if (loading) {
+  if (loading || loadingTotalPayments) {
     return (
       <Layout>
         <div className='max-w-7xl mx-auto'>
@@ -154,7 +201,7 @@ const AdminDashboard = () => {
     );
   }
 
-  if (error) {
+  if (error || errorTotalPayments) {
     return (
       <Layout>
         <div className='max-w-7xl mx-auto'>
@@ -164,6 +211,20 @@ const AdminDashboard = () => {
               <Button onClick={() => window.location.reload()}>
                 Try Again
               </Button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+  if (loadingTotalPayments) {
+    return (
+      <Layout>
+        <div className='max-w-7xl mx-auto'>
+          <div className='flex items-center justify-center min-h-[400px]'>
+            <div className='text-center'>
+              <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto mb-4' />
+              <p className='text-gray-600'>Loading payment totals...</p>
             </div>
           </div>
         </div>
@@ -217,9 +278,46 @@ const AdminDashboard = () => {
   return (
     <Layout>
       <div className='max-w-7xl mx-auto'>
-        <div className='flex flex-col sm:flex-row pb-4 justify-between gap-2 items-center'>
-          <h1 className='text-2xl font-bold mb-2'>Admin Dashboard</h1>
+        {/* Payment Summary Cards */}
+        <h1 className='text-2xl font-bold mb-2'>Admin Dashboard</h1>
+        <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 my-4'>
+          <Card className='bg-green-50 border border-green-200'>
+            <CardHeader className='flex items-center gap-2'>
+              <Wallet className='text-green-600' />
+              <CardTitle>Cash Payments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className='text-2xl font-bold text-green-700'>
+                ₹ {paymentTotals.cash_total}
+              </p>
+            </CardContent>
+          </Card>
 
+          <Card className='bg-blue-50 border border-blue-200'>
+            <CardHeader className='flex items-center gap-2'>
+              <CreditCard className='text-blue-600' />
+              <CardTitle>UPI Payments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className='text-2xl font-bold text-blue-700'>
+                ₹ {paymentTotals.upi_total}{' '}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className='bg-yellow-50 border border-yellow-200'>
+            <CardHeader className='flex items-center gap-2'>
+              <Banknote className='text-yellow-600' />
+              <CardTitle>Cheque Payments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className='text-2xl font-bold text-yellow-700'>
+                ₹ {paymentTotals.cheque_total}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+        <div className='flex flex-col sm:flex-row pb-4 justify-between gap-2 items-center'>
           {/* Search bar (full width on small screens) */}
           <div className='flex w-full sm:w-auto items-center gap-2'>
             <Input

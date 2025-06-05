@@ -38,7 +38,7 @@ interface DataContextType {
   userBills: AssignmentsResponse | null;
   userBillsLoading: boolean;
   userBillsError: string | null;
-  fetchUserInvoices: () => Promise<void>; // Function to fetch user invoices
+  fetchUserInvoices: (invoiceNumber?: string) => Promise<void>; // Function to fetch user invoices
   fetchInvoices: (invoiceNumber?: string) => Promise<void>; // Function to fetch invoices
   refreshUserInvoices: () => Promise<void>; // Add refreshUserInvoices to the context type
 }
@@ -106,7 +106,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchInvoices();
   }, []);
 
-  const fetchUserInvoices = async () => {
+  const fetchUserInvoices = async (invoiceNumber?: string) => {
     try {
       setUserBillsLoading(true);
       setUserBillsError(null);
@@ -115,14 +115,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!token) {
         throw new Error('No access token found');
       }
-      const response = await axios.get(
-        `${API_URL}/api/bills/my-assignments-flat/`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+
+      let url = `${API_URL}/api/bills/my-assignments-flat/`;
+      if (invoiceNumber && invoiceNumber.trim().length > 0) {
+        const encoded = encodeURIComponent(invoiceNumber.trim());
+        url += `?invoice_number=${encoded}`;
+      }
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setUserBills(response.data as AssignmentsResponse);
       console.log(
         'Fetched user invoices------------------------------:',

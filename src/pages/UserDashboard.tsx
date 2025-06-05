@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useData } from '../context/DataContext';
 import Layout from '../components/Layout';
 import { Formik, Form, Field, ErrorMessage, type FormikHelpers } from 'formik';
@@ -33,11 +33,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { API_URL } from '@/lib/url';
+import { Search } from 'lucide-react';
 
 const UserDashboard: React.FC = () => {
   const { userBills, userBillsLoading, userBillsError, fetchUserInvoices } =
     useData();
   const { toast } = useToast();
+  const debounceRef = useRef<number | null>(null);
 
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<SimpleBill | null>(
@@ -45,11 +47,66 @@ const UserDashboard: React.FC = () => {
   );
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [noResults, setNoResults] = useState(false);
 
-  // Fetch user invoices on mount
+  // Debounced search with proper cleanup
   useEffect(() => {
-    fetchUserInvoices();
-  }, []);
+    const debounceTimeout = 500; // ms
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = window.setTimeout(() => {
+      handleSearch();
+    }, debounceTimeout);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchTerm]);
+
+  const handleSearch = async () => {
+    try {
+      await fetchUserInvoices(searchTerm.trim());
+      // Check if we have no results after search
+      if (searchTerm.trim() && userBills?.bills?.length === 0) {
+        setNoResults(true);
+      } else {
+        setNoResults(false);
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+      setNoResults(false);
+      fetchUserInvoices(undefined);
+      toast({
+        title: 'Search Error',
+        description: 'Failed to perform search. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Handle manual search trigger (button click)
+  const handleManualSearch = () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    handleSearch();
+  };
+
+  // Handle Enter key press
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      handleSearch();
+    }
+  };
 
   // Our bills array
   const bills: SimpleBill[] = userBills?.bills ?? [];
@@ -239,7 +296,21 @@ const UserDashboard: React.FC = () => {
   return (
     <Layout>
       <div className='max-w-7xl mx-auto'>
-        <h1 className='text-2xl font-bold mb-6'>User Dashboard</h1>
+        <div className='flex justify-between items-center mb-4'>
+          <h1 className='text-2xl font-bold mb-6'>User Dashboard</h1>
+          <div className='flex w-full sm:w-auto items-center gap-2'>
+            <Input
+              className='w-full sm:w-64'
+              placeholder='Search by invoice number...'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <Button onClick={handleManualSearch}>
+              <Search className='h-4 w-4' />
+            </Button>
+          </div>
+        </div>
         <div className='bg-white shadow rounded-lg p-6'>
           <h2 className='text-lg font-semibold mb-4'>Your Collection Tasks</h2>
 
@@ -247,6 +318,16 @@ const UserDashboard: React.FC = () => {
             <div className='text-center py-8 text-gray-500'>
               No collection tasks assigned to you yet.
             </div>
+          ) : noResults ? (
+            <Button
+              onClick={() => {
+                setSearchTerm('');
+                // fetchAndHandle('');
+                // setCurrentPage(1);
+              }}
+            >
+              Clear Search
+            </Button>
           ) : (
             <Table>
               <TableHeader>
@@ -254,6 +335,8 @@ const UserDashboard: React.FC = () => {
                   <TableHead>Route Name</TableHead>
                   <TableHead>Outlet</TableHead>
                   <TableHead>Invoice No.</TableHead>
+                  <TableHead>Actual Amount</TableHead>
+                  <TableHead>Remain Amount</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Brand</TableHead>
                   <TableHead>Status</TableHead>
@@ -266,6 +349,8 @@ const UserDashboard: React.FC = () => {
                     <TableCell>{bill.route_name}</TableCell>
                     <TableCell>{bill.outlet_name}</TableCell>
                     <TableCell>{bill.invoice_number}</TableCell>
+                    <TableCell>{bill.actual_amount}</TableCell>
+                    <TableCell>{bill.remaining_amount}</TableCell>
                     <TableCell>{bill.invoice_date}</TableCell>
                     <TableCell>{bill.brand}</TableCell>
                     <TableCell>

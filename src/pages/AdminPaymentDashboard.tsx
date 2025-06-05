@@ -179,9 +179,8 @@ const AdminPaymentDashboard: React.FC = () => {
     <Layout>
       <div className='max-w-7xl mx-auto'>
         {/* Header: Title, Search bar, Back button, Export */}
+        <h1 className='text-2xl font-bold mb-2'>Payment Dashboard</h1>
         <div className='flex flex-col sm:flex-row items-center justify-between gap-2 pb-4'>
-          <h1 className='text-2xl font-bold'>Admin Payment Dashboard</h1>
-
           <div className='flex w-full sm:w-auto items-center gap-2'>
             <Input
               className='w-full sm:w-64'
