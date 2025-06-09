@@ -38,7 +38,10 @@ interface DataContextType {
   userBills: AssignmentsResponse | null;
   userBillsLoading: boolean;
   userBillsError: string | null;
-  fetchUserInvoices: (invoiceNumber?: string) => Promise<void>; // Function to fetch user invoices
+  fetchUserInvoices: (
+    value?: string,
+    field?: 'invoice_number' | 'route_name' | 'outlet_name'
+  ) => Promise<void>;
   fetchInvoices: (invoiceNumber?: string) => Promise<void>; // Function to fetch invoices
   refreshUserInvoices: () => Promise<void>; // Add refreshUserInvoices to the context type
 }
@@ -106,45 +109,73 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchInvoices();
   }, []);
 
-  const fetchUserInvoices = async (invoiceNumber?: string) => {
+  // const fetchUserInvoices = async (invoiceNumber?: string) => {
+  const fetchUserInvoices = async (
+    value?: string,
+    field: 'invoice_number' | 'route_name' | 'outlet_name' = 'invoice_number'
+  ) => {
+    setUserBillsLoading(true);
+    setUserBillsError(null);
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
+
+    let url = `${API_URL}/api/bills/my-assignments-flat/`;
+    if (value) {
+      url += `?${field}=${encodeURIComponent(value)}`;
+    }
+
     try {
-      setUserBillsLoading(true);
-      setUserBillsError(null);
-      const token = localStorage.getItem('accessToken');
-
-      if (!token) {
-        throw new Error('No access token found');
-      }
-
-      let url = `${API_URL}/api/bills/my-assignments-flat/`;
-      if (invoiceNumber && invoiceNumber.trim().length > 0) {
-        const encoded = encodeURIComponent(invoiceNumber.trim());
-        url += `?invoice_number=${encoded}`;
-      }
-      const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const { data } = await axios.get<AssignmentsResponse>(url, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setUserBills(response.data as AssignmentsResponse);
-      console.log(
-        'Fetched user invoices------------------------------:',
-        response.data
-      );
-    } catch (error: unknown) {
-      console.error('Failed to fetch user invoices:', error);
-      setUserBillsError(
-        error instanceof Error ? error.message : 'Failed to fetch user invoices'
-      );
-      toast({
-        title: 'Error',
-        description: 'Unable to fetch user invoices.',
-        variant: 'destructive',
-      });
+      setUserBills(data);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to fetch user invoices';
+      setUserBillsError(errorMessage);
+      throw err;
     } finally {
       setUserBillsLoading(false);
     }
   };
+  //   try {
+  //     setUserBillsLoading(true);
+  //     setUserBillsError(null);
+  //     const token = localStorage.getItem('accessToken');
+
+  //     if (!token) {
+  //       throw new Error('No access token found');
+  //     }
+
+  //     let url = `${API_URL}/api/bills/my-assignments-flat/`;
+  //     if (invoiceNumber && invoiceNumber.trim().length > 0) {
+  //       const encoded = encodeURIComponent(invoiceNumber.trim());
+  //       url += `?invoice_number=${encoded}`;
+  //     }
+  //     const response = await axios.get(url, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+  //     setUserBills(response.data as AssignmentsResponse);
+  //     console.log(
+  //       'Fetched user invoices------------------------------:',
+  //       response.data
+  //     );
+  //   } catch (error: unknown) {
+  //     console.error('Failed to fetch user invoices:', error);
+  //     setUserBillsError(
+  //       error instanceof Error ? error.message : 'Failed to fetch user invoices'
+  //     );
+  //     toast({
+  //       title: 'Error',
+  //       description: 'Unable to fetch user invoices.',
+  //       variant: 'destructive',
+  //     });
+  //   } finally {
+  //     setUserBillsLoading(false);
+  //   }
+  // };
 
   const refreshUserInvoices = async () => {
     await fetchUserInvoices(); // Call the fetchUserInvoices function

@@ -49,62 +49,36 @@ const UserDashboard: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [noResults, setNoResults] = useState(false);
+  const [filterBy, setFilterBy] = useState<
+    'invoice_number' | 'route_name' | 'outlet_name'
+  >('invoice_number');
 
   // Debounced search with proper cleanup
   useEffect(() => {
-    const debounceTimeout = 500; // ms
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    debounceRef.current = window.setTimeout(() => {
-      handleSearch();
-    }, debounceTimeout);
-
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, [searchTerm]);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(handleSearch, 500);
+    return () => clearTimeout(debounceRef.current!);
+  }, [searchTerm, filterBy]);
 
   const handleSearch = async () => {
-    try {
-      await fetchUserInvoices(searchTerm.trim());
-      // Check if we have no results after search
-      if (searchTerm.trim() && userBills?.bills?.length === 0) {
-        setNoResults(true);
-      } else {
-        setNoResults(false);
-      }
-    } catch (error) {
-      console.error('Search failed:', error);
-      setNoResults(false);
-      fetchUserInvoices(undefined);
-      toast({
-        title: 'Search Error',
-        description: 'Failed to perform search. Please try again.',
-        variant: 'destructive',
-      });
-    }
+    const term = searchTerm.trim();
+    const termData = term ? term : undefined;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    await fetchUserInvoices(termData, filterBy);
+    setNoResults(term !== '' && (userBills?.bills?.length ?? 0) === 0);
   };
 
   // Handle manual search trigger (button click)
   const handleManualSearch = () => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     handleSearch();
   };
 
   // Handle Enter key press
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-      handleSearch();
+      e.preventDefault();
+      handleManualSearch();
     }
   };
 
@@ -296,16 +270,37 @@ const UserDashboard: React.FC = () => {
   return (
     <Layout>
       <div className='max-w-7xl mx-auto'>
+        <h1 className='text-2xl text-center sm:text-left font-bold mb-6 '>
+          User Dashboard
+        </h1>
         <div className='flex justify-between items-center mb-4'>
-          <h1 className='text-2xl font-bold mb-6'>User Dashboard</h1>
           <div className='flex w-full sm:w-auto items-center gap-2'>
+            <Select
+              value={filterBy}
+              onValueChange={(val) =>
+                setFilterBy(
+                  val as 'invoice_number' | 'route_name' | 'outlet_name'
+                )
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Search By…' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='invoice_number'>Invoice Number</SelectItem>
+                <SelectItem value='route_name'>Route Name</SelectItem>
+                <SelectItem value='outlet_name'>Outlet Name</SelectItem>
+              </SelectContent>
+            </Select>
+
             <Input
               className='w-full sm:w-64'
-              placeholder='Search by invoice number...'
+              placeholder={`Search by ${filterBy.replace('_', ' ')}`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleKeyDown}
             />
+
             <Button onClick={handleManualSearch}>
               <Search className='h-4 w-4' />
             </Button>
