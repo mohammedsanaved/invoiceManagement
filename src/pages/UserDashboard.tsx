@@ -109,6 +109,7 @@ const UserDashboard: React.FC = () => {
         ...baseSchema,
         transaction_number: Yup.number()
           .required('Transaction number is required for UPI payments')
+          .max(5, 'UTR number must be 5 digits')
           .positive('Transaction number must be positive'),
       });
     }
