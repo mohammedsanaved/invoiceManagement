@@ -425,6 +425,14 @@ const UserDashboard: React.FC = () => {
                       readOnly
                     />
                   </div>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label className=''>Remaining Amount</Label>
+                    <Input
+                      className='col-span-3'
+                      value={selectedInvoice.remaining_amount}
+                      readOnly
+                    />
+                  </div>
 
                   <div className='grid grid-cols-4 items-center gap-4'>
                     <Label className='text-right'>Amount *</Label>
@@ -451,7 +459,7 @@ const UserDashboard: React.FC = () => {
                   </div>
 
                   <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label className='text-right'>Payment Method *</Label>
+                    <Label className=''>Payment Method *</Label>
                     <div className='col-span-3'>
                       <Field name='payment_method'>
                         {({
@@ -488,7 +496,7 @@ const UserDashboard: React.FC = () => {
 
                   {values.payment_method === 'upi' && (
                     <div className='grid grid-cols-4 items-center gap-4'>
-                      <Label className='text-right'>Transaction Number *</Label>
+                      <Label className='text-right'>UTR Number *</Label>
                       <div className='col-span-3'>
                         <Field
                           as={Input}

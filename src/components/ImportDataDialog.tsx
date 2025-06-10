@@ -12,6 +12,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { API_URL } from '@/lib/url';
+import { useData } from '@/context/DataContext';
 
 interface AssignDialogProps {
   open: boolean;
@@ -22,6 +23,7 @@ const ImportDataDialog = ({ open, onClose }: AssignDialogProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  const { refreshInvoices } = useData();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -72,7 +74,7 @@ const ImportDataDialog = ({ open, onClose }: AssignDialogProps) => {
 
     try {
       setIsUploading(true);
-      await axios.post(`${API_URL}/api/bills/import/`, formData, {
+      await axios.post(`${API_URL}/api/bills/import-excel/`, formData, {
         headers: {
           //   'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -84,6 +86,7 @@ const ImportDataDialog = ({ open, onClose }: AssignDialogProps) => {
         title: 'Success',
         description: 'File uploaded successfully.',
       });
+      refreshInvoices();
       onClose(); // close dialog
       setFile(null);
     } catch (error: unknown | string) {

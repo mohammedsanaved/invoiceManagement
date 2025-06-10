@@ -359,7 +359,7 @@ const AdminDashboard = () => {
               className='flex items-center gap-2'
               onClick={() => setIsImportDialogOpen(true)}
             >
-              <FileInput className='h-4 w-4' /> Imports Payments
+              <FileInput className='h-4 w-4' /> Imports Bills
             </Button>
           </div>
         </div>
