@@ -44,8 +44,8 @@ const Login = () => {
 
     try {
       const user = await login(email, password);
-      if (user.is_admin) {
-        navigate('/admin');
+      if (user.username === 'admin') {
+        navigate('/verify');
         await refreshInvoices();
       } else if (user.is_admin === false) {
         navigate('/user');

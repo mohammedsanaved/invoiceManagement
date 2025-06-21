@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import {
   ArrowUpRight,
   Banknote,
+  // Cable,
   ChevronDown,
   CreditCard,
   FileInput,
@@ -305,6 +306,17 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
+          {/* <Card className='bg-zinc-50 border border-zinc-200'>
+            <CardHeader className='flex items-center gap-2'>
+              <Cable className='text-zinc-600' />
+              <CardTitle>Electronic Payments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className='text-2xl font-bold text-zinc-700'>
+                ₹ {paymentTotals.cheque_total}
+              </p>
+            </CardContent>
+          </Card> */}
           <Card className='bg-yellow-50 border border-yellow-200'>
             <CardHeader className='flex items-center gap-2'>
               <Banknote className='text-yellow-600' />
@@ -340,7 +352,13 @@ const AdminDashboard = () => {
             </Button>
           </div>
 
-          <div className='flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow'>
+          <div className='flex items-center gap-2 px-3 py-2 bg-white flex-wrap rounded-lg shadow'>
+            <Link to='/admin/payments/cheque'>
+              <Button size={'sm'} className='flex items-center gap-2'>
+                Cheque History
+                <ArrowUpRight className='h-4 w-4' />
+              </Button>
+            </Link>
             <Link to='/admin/payments'>
               <Button size={'sm'} className='flex items-center gap-2'>
                 Pay History

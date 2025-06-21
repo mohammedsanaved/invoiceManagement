@@ -17,6 +17,7 @@ interface Payment {
   transaction_number: string | null;
   cheque_type: 'imps' | 'neft' | 'rtgs' | null | '';
   cheque_date: string | null;
+  firm: string;
   amount: number;
 }
 
@@ -28,10 +29,11 @@ const PaymentTable = ({ payments }: { payments: Payment[] }) => {
           <TableHead>Route Name</TableHead>
           <TableHead>Outlet Name</TableHead>
           <TableHead>Invoice Number</TableHead>
-          <TableHead>Date</TableHead>
+          <TableHead>Collection Date</TableHead>
           <TableHead>Payment Method</TableHead>
           <TableHead>Transaction Number</TableHead>
           <TableHead>Cheque Type</TableHead>
+          <TableHead>Firm</TableHead>
           <TableHead>Cheque Date</TableHead>
 
           <TableHead>Amount</TableHead>
@@ -67,6 +69,7 @@ const PaymentTable = ({ payments }: { payments: Payment[] }) => {
                   ? '-'
                   : 'Invalid'}
               </TableCell>
+              <TableCell>{payment.firm || '-'}</TableCell>
               <TableCell>{payment.cheque_date || '-'}</TableCell>
               <TableCell>{payment.amount}</TableCell>
             </TableRow>

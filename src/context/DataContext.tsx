@@ -3,6 +3,7 @@ import type { AssignmentsResponse, Invoice, Payment } from '../types';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 import { API_URL } from '@/lib/url';
+import { useAuth } from './AuthContext';
 
 // const addInvoice = async () => {
 //   ...
@@ -63,9 +64,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
+  const { currentUser } = useAuth();
   // Centralized function to fetch invoices
   const fetchInvoices = async (invoiceNumber?: string) => {
+    if (currentUser?.role !== 'admin') return;
     try {
       setLoading(true);
       setError(null);
@@ -114,17 +116,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
     value?: string,
     field: 'invoice_number' | 'route_name' | 'outlet_name' = 'invoice_number'
   ) => {
-    setUserBillsLoading(true);
-    setUserBillsError(null);
-    const token = localStorage.getItem('accessToken');
-    if (!token) throw new Error('No access token found');
-
-    let url = `${API_URL}/api/bills/my-assignments-flat/`;
-    if (value) {
-      url += `?${field}=${encodeURIComponent(value)}`;
-    }
-
+    if (!currentUser || currentUser.role !== 'dra') return;
     try {
+      setUserBillsLoading(true);
+      setUserBillsError(null);
+      const token = localStorage.getItem('accessToken');
+      if (!token) throw new Error('No access token found');
+
+      let url = `${API_URL}/api/bills/my-assignments-flat/`;
+      if (value) {
+        url += `?${field}=${encodeURIComponent(value)}`;
+      }
       const { data } = await axios.get<AssignmentsResponse>(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -325,6 +327,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({
       description: `Email sent to ${email}`,
     });
   };
+
+  useEffect(() => {
+    // every 30s, refresh both lists
+    const interval = setInterval(() => {
+      fetchInvoices();
+      // fetchUserInvoices();
+    }, 300000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <DataContext.Provider

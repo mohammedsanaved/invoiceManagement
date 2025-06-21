@@ -14,19 +14,22 @@ import NotFoundPage from './pages/NotFoundPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import Index from './pages/Index';
 import AdminPaymentDashboard from './pages/AdminPaymentDashboard';
+import VerifyOtp from './pages/VerifyOtp';
+import AdminChequeDashboard from './pages/AdminChequeDashboard';
 
 // const queryClient = new QueryClient();
 
 const App = () => (
   // <QueryClientProvider client={queryClient}>
-  <TooltipProvider>
-    <AuthProvider>
-      <DataProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+  <BrowserRouter>
+    <TooltipProvider>
+      <AuthProvider>
+        <DataProvider>
+          <Toaster />
+          <Sonner />
           <Routes>
             <Route path='/login' element={<Login />} />
+            <Route path='/verify' element={<VerifyOtp />} />
 
             {/* Protected Admin Route */}
             <Route
@@ -42,6 +45,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminPaymentDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/admin/payments/cheque'
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminChequeDashboard />
                 </ProtectedRoute>
               }
             />
@@ -63,10 +74,10 @@ const App = () => (
 
             <Route path='*' element={<NotFoundPage />} />
           </Routes>
-        </BrowserRouter>
-      </DataProvider>
-    </AuthProvider>
-  </TooltipProvider>
+        </DataProvider>
+      </AuthProvider>
+    </TooltipProvider>
+  </BrowserRouter>
   // </QueryClientProvider>
 );
 
