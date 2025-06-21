@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '../context/AuthContext';
+import { toast } from '@/hooks/use-toast';
 
 export default function VerifyOTP() {
   // State for each OTP digit
@@ -45,6 +46,11 @@ export default function VerifyOTP() {
     // TODO: call your verify OTP API here
     console.log('Verifying OTP:', code);
     await verifyOtp(code);
+    toast({
+      variant: 'default',
+      title: 'OTP Verified',
+      description: 'Your OTP has been successfully verified.',
+    });
   };
 
   return (

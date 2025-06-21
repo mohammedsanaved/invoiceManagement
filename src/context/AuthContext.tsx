@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     initializeAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<User> => {
+  const login = async (email: string, password: string) => {
     const response = await fetch(`${API_URL}/api/auth/login/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -59,16 +59,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       throw new Error('Invalid credentials');
     }
     const data = await response.json();
+    console.log('--------------------Dataa', data);
     const { user, access, refresh } = data;
 
-    if (user.username === 'admin') {
-      // Admin: hold for OTP
-      setPendingAdminUsername(user.username);
-      localStorage.setItem('pendingAdminUsername', user.username);
-      // we navigate to /verify but still return user
+    if (data.username === 'admin') {
+      // Admin must verify OTP
+      setPendingAdminUsername(data.username);
+      localStorage.setItem('pendingAdminUsername', data.username);
       navigate('/verify');
     } else {
-      // Normal user: store tokens & user, mark authenticated
+      // Normal user: complete login immediately
       localStorage.setItem('accessToken', access);
       localStorage.setItem('refreshToken', refresh);
       localStorage.setItem('currentUser', JSON.stringify(user));
@@ -77,7 +77,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsAuthenticated(true);
       navigate('/user');
     }
-
     return user;
   };
 

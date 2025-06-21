@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import {
@@ -25,7 +25,7 @@ const Login = () => {
   const { login } = useAuth();
 
   const { toast } = useToast();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { refreshInvoices, refreshUserInvoices } = useData();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,20 +43,23 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const user = await login(email, password);
-      if (user.username === 'admin') {
-        navigate('/verify');
-        await refreshInvoices();
-      } else if (user.is_admin === false) {
-        navigate('/user');
-        await refreshUserInvoices();
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Invalid user role. Please contact admin.',
-        });
-      }
+      await login(email, password);
+      await refreshInvoices();
+      await refreshUserInvoices();
+      // console.log('--------------------------------User Data', user);
+      // if (user.username === 'admin') {
+      //   navigate('/verify');
+      //   await refreshInvoices();
+      // } else if (user.is_admin === false) {
+      //   navigate('/user');
+      //   await refreshUserInvoices();
+      // } else {
+      //   toast({
+      //     variant: 'destructive',
+      //     title: 'Error',
+      //     description: 'Invalid user role. Please contact admin.',
+      //   });
+      // }
     } catch (error: string | unknown) {
       if (error instanceof Error) {
         toast({
