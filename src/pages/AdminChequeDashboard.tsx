@@ -9,6 +9,7 @@ import axios from 'axios';
 import { ChevronDown, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ChequePaymentTable from '@/components/ChequePaymentTable';
+// import { Input } from '@/components/ui/input';
 
 const AdminChequeDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -189,20 +190,22 @@ const AdminChequeDashboard: React.FC = () => {
         {/* Header: Title, Search bar, Back button, Export */}
         <div className='flex flex-col sm:flex-row items-center justify-between gap-2 pb-4'>
           <h1 className='text-2xl font-bold mb-2'>Cheque Payment Dashboard</h1>
-          {/* <div className='flex w-full sm:w-auto items-center gap-2'>
-            <Input
-              className='w-full sm:w-64'
-              placeholder='Search by Invoice Number'
-              value={searchInvoiceTerm}
-              onChange={(e) => setSearchInvoiceTerm(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-            <Button onClick={handleSearchClick}>
-              <Search className='h-4 w-4' />
-            </Button>
-          </div> */}
 
           <div className='flex items-center gap-2'>
+            {/* <div className='flex w-full sm:w-auto items-center gap-2'>
+              <Input
+                className='w-full sm:w-64'
+                placeholder='Search by Invoice Number'
+                value={searchInvoiceTerm}
+                // onChange={(e) => setSearchInvoiceTerm(e.target.value)}
+                // onKeyDown={handleKeyDown}
+              />
+              <Button
+              // onClick={handleSearchClick}
+              >
+                <Search className='h-4 w-4' />
+              </Button>
+            </div> */}
             <Button
               variant='outline'
               size='sm'
