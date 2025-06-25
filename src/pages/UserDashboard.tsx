@@ -438,6 +438,7 @@ const UserDashboard: React.FC = () => {
                   <TableHead>Actual Amount</TableHead>
                   <TableHead>Remain Amount</TableHead>
                   <TableHead>Invoice Date</TableHead>
+                  <TableHead>OverDue Days</TableHead>
                   <TableHead>Brand</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Action</TableHead>
@@ -452,6 +453,7 @@ const UserDashboard: React.FC = () => {
                     <TableCell>{bill.actual_amount}</TableCell>
                     <TableCell>{bill.remaining_amount}</TableCell>
                     <TableCell>{bill.invoice_date}</TableCell>
+                    <TableCell>{bill.overdue_days}</TableCell>
                     <TableCell>{bill.brand}</TableCell>
                     <TableCell>
                       <span

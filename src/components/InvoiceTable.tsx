@@ -60,6 +60,36 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
     }));
   };
 
+  function formatToIST(datetime: string): string {
+    const date = new Date(datetime);
+
+    // Use Intl to get parts in the right timeZone & format
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }).formatToParts(date);
+
+    // Pull out the pieces we need
+    const map: Record<string, string> = {};
+    for (const { type, value } of parts) {
+      map[type] = value;
+    }
+
+    const year = map.year;
+    const month = map.month;
+    const day = map.day;
+    const hour = map.hour.padStart(2, '0');
+    const minute = map.minute.padStart(2, '0');
+    const ampm = map.dayPeriod.toLowerCase(); // "am" or "pm"
+
+    return `${year}-${month}-${day} ${hour}:${minute} ${ampm}`;
+  }
+
   return (
     <Table>
       <TableHeader>
@@ -67,7 +97,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
           <TableHead>Outlet Name</TableHead>
           <TableHead>Invoice No.</TableHead>
           <TableHead>Invoice Date</TableHead>
-          <TableHead>Bill Date</TableHead>
+          <TableHead>Invoice Creation Date</TableHead>
           <TableHead>Actual Amount</TableHead>
           <TableHead>Remaining Amount</TableHead>
           <TableHead>Overdue Days</TableHead>
@@ -87,7 +117,9 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
               <TableCell>{invoice.outlet_name}</TableCell>
               <TableCell>{invoice.invoice_number}</TableCell>
               <TableCell>{invoice.invoice_date}</TableCell>
-              <TableCell>{invoice.invoice_date}</TableCell>
+              <TableCell>
+                {invoice.created_at ? formatToIST(invoice.created_at) : '-'}
+              </TableCell>
               <TableCell>{invoice.actual_amount}</TableCell>
               <TableCell>{invoice.remaining_amount}</TableCell>
               <TableCell>{invoice.overdue_days}</TableCell>

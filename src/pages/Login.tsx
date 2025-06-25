@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useData } from '@/context/DataContext';
+// import { useData } from '@/context/DataContext';
 import { Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
@@ -26,7 +26,7 @@ const Login = () => {
 
   const { toast } = useToast();
   // const navigate = useNavigate();
-  const { refreshInvoices, refreshUserInvoices } = useData();
+  // const { refreshInvoices, refreshUserInvoices } = useData();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +44,8 @@ const Login = () => {
 
     try {
       await login(email, password);
-      await refreshInvoices();
-      await refreshUserInvoices();
+      // await refreshInvoices();
+      // await refreshUserInvoices();
       // console.log('--------------------------------User Data', user);
       // if (user.username === 'admin') {
       //   navigate('/verify');

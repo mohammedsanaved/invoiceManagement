@@ -22,6 +22,35 @@ interface Payment {
 }
 
 const PaymentTable = ({ payments }: { payments: Payment[] }) => {
+  function formatToIST(datetime: string): string {
+    const date = new Date(datetime);
+
+    // Use Intl to get parts in the right timeZone & format
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }).formatToParts(date);
+
+    // Pull out the pieces we need
+    const map: Record<string, string> = {};
+    for (const { type, value } of parts) {
+      map[type] = value;
+    }
+
+    const year = map.year;
+    const month = map.month;
+    const day = map.day;
+    const hour = map.hour.padStart(2, '0');
+    const minute = map.minute.padStart(2, '0');
+    const ampm = map.dayPeriod.toLowerCase(); // "am" or "pm"
+
+    return `${year}-${month}-${day} ${hour}:${minute} ${ampm}`;
+  }
   return (
     <Table className='mt-4'>
       <TableHeader>
@@ -41,7 +70,6 @@ const PaymentTable = ({ payments }: { payments: Payment[] }) => {
       </TableHeader>
       <TableBody>
         {payments.map((payment: Payment) => {
-          const paymentDate = payment.created_at.split('T')?.[0];
           //   const selectedEmployeeId = selectedAssignments[payment.id];
 
           return (
@@ -49,7 +77,7 @@ const PaymentTable = ({ payments }: { payments: Payment[] }) => {
               <TableCell>{payment.route_name}</TableCell>
               <TableCell>{payment.outlet_name}</TableCell>
               <TableCell>{payment.invoice_number}</TableCell>
-              <TableCell>{paymentDate}</TableCell>
+              <TableCell>{formatToIST(payment.created_at)}</TableCell>
               <TableCell>
                 {payment.payment_method === 'cash'
                   ? 'Cash'

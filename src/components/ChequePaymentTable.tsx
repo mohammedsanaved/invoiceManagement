@@ -176,6 +176,36 @@ const ChequePaymentTable = ({
     deletePayment(paymentId);
   };
 
+  function formatToIST(datetime: string): string {
+    const date = new Date(datetime);
+
+    // Use Intl to get parts in the right timeZone & format
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }).formatToParts(date);
+
+    // Pull out the pieces we need
+    const map: Record<string, string> = {};
+    for (const { type, value } of parts) {
+      map[type] = value;
+    }
+
+    const year = map.year;
+    const month = map.month;
+    const day = map.day;
+    const hour = map.hour.padStart(2, '0');
+    const minute = map.minute.padStart(2, '0');
+    const ampm = map.dayPeriod.toLowerCase(); // "am" or "pm"
+
+    return `${year}-${month}-${day} ${hour}:${minute} ${ampm}`;
+  }
+
   return (
     <Table className='mt-4'>
       <TableHeader>
@@ -183,7 +213,7 @@ const ChequePaymentTable = ({
           <TableHead>Route Name</TableHead>
           <TableHead>Outlet Name</TableHead>
           <TableHead>Invoice Number</TableHead>
-          <TableHead>Bill Date</TableHead>
+          <TableHead>Invoice Creation Bill Date</TableHead>
           <TableHead>Payment Method</TableHead>
           <TableHead>Firm</TableHead>
           <TableHead>Cheque Type</TableHead>
@@ -195,22 +225,6 @@ const ChequePaymentTable = ({
       </TableHeader>
       <TableBody>
         {payments.map((payment: Invoice) => {
-          const paymentDate = payment.created_at.split('T')?.[0];
-          const rawPaymentTime = payment.created_at.split('T')?.[1];
-
-          function formatTime(timeString: string): string {
-            const timestamp = Date.parse(timeString.replace('Z', '+00:00'));
-            const date = new Date(timestamp);
-            const hours = date.getHours();
-            const minutes = date.getMinutes();
-            const ampm = hours >= 12 ? 'pm' : 'am';
-            const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
-            return `${formattedHours}:${minutes
-              .toString()
-              .padStart(2, '0')} ${ampm}`;
-          }
-
-          const formattedTime = formatTime(rawPaymentTime);
           const isLoading = loadingStates[payment.id] || false;
 
           const disabled =
@@ -226,7 +240,7 @@ const ChequePaymentTable = ({
               <TableCell>{payment.outlet_name}</TableCell>
               <TableCell>{payment.invoice_number}</TableCell>
               <TableCell>
-                {paymentDate} {formattedTime}
+                {payment.created_at ? formatToIST(payment.created_at) : '-'}
               </TableCell>
               <TableCell>
                 {payment.payment_method === 'cash'

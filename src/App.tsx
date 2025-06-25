@@ -28,6 +28,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <Routes>
+            <Route path={'/'} element={<Login />} />
             <Route path='/login' element={<Login />} />
             <Route path='/verify' element={<VerifyOtp />} />
 
