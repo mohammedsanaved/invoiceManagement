@@ -61,8 +61,10 @@ const AdminChequeDashboard: React.FC = () => {
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log(response, 'Response from payments API');
 
-      const data = response.data || [];
+      const data = response?.data?.results || [];
+      console.log(data, 'Payments data fetched');
       setPayments(data);
       setNoResults(invoiceNumber !== '' && data.length === 0);
     } catch (err: unknown) {
