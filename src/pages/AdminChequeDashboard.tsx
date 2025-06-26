@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Layout from '@/components/Layout';
 // import PaymentTable from '@/components/PaymentTable';
 import ExportPaymentDataDialog from '@/components/ExportPaymentDataDialog';
@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 // import { Input } from '@/components/ui/input';
 import { API_URL } from '@/lib/url';
 import axios from 'axios';
-import { ChevronDown, ChevronLeft } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ChequePaymentTable from '@/components/ChequePaymentTable';
+import { Input } from '@/components/ui/input';
 // import { Input } from '@/components/ui/input';
 
 const AdminChequeDashboard: React.FC = () => {
@@ -25,7 +26,7 @@ const AdminChequeDashboard: React.FC = () => {
   const [noResults, setNoResults] = useState(false);
 
   // We'll keep a ref to the current debounce timer:
-  // const debounceRef = useRef<number | null>(null);
+  const debounceRef = useRef<number | null>(null);
 
   // Compute total pages
   const totalPages = useMemo(() => {
@@ -33,10 +34,10 @@ const AdminChequeDashboard: React.FC = () => {
   }, [payments.length, pageSize]);
 
   // Slice out just the page we need
-  // const paginatedPayments = useMemo(() => {
-  //   const startIndex = (currentPage - 1) * pageSize;
-  //   return payments.slice(startIndex, startIndex + pageSize);
-  // }, [payments, currentPage, pageSize]);
+  const paginatedPayments = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return payments.slice(startIndex, startIndex + pageSize);
+  }, [payments, currentPage, pageSize]);
 
   /**
    * Fetch payments from the API.
@@ -51,18 +52,15 @@ const AdminChequeDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // let url = `${API_URL}/api/payments/cheque-history/`;
-      // if (invoiceNumber && invoiceNumber.trim().length > 0) {
-      //   const encoded = encodeURIComponent(invoiceNumber.trim());
-      //   url += `?invoice_number=${encoded}`;
-      // }
+      let url = `${API_URL}/api/payments/cheque-history/`;
+      if (invoiceNumber && invoiceNumber.trim().length > 0) {
+        const encoded = encodeURIComponent(invoiceNumber.trim());
+        url += `?invoice_number=${encoded}`;
+      }
 
-      const response = await axios.get(
-        `${API_URL}/api/payments/cheque-history/`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       const data = response.data || [];
       setPayments(data);
@@ -85,32 +83,32 @@ const AdminChequeDashboard: React.FC = () => {
   };
 
   // Whenever `searchInvoiceTerm` changes, debounce for 500ms before fetching
-  // useEffect(() => {
-  //   if (debounceRef.current) {
-  //     clearTimeout(debounceRef.current);
-  //   }
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
 
-  //   // If the field is blank, fetch all immediately (no search term)
-  //   if (searchInvoiceTerm.trim() === '') {
-  //     // Avoid waiting the full debounce delay—clear “noResults” and fetch immediately
-  //     setNoResults(false);
-  //     fetchPayments();
-  //     setCurrentPage(1);
-  //     return;
-  //   }
+    // If the field is blank, fetch all immediately (no search term)
+    if (searchInvoiceTerm.trim() === '') {
+      // Avoid waiting the full debounce delay—clear “noResults” and fetch immediately
+      setNoResults(false);
+      fetchPayments();
+      setCurrentPage(1);
+      return;
+    }
 
-  //   // Otherwise, wait 500ms before fetching
-  //   debounceRef.current = window.setTimeout(() => {
-  //     fetchPayments(searchInvoiceTerm.trim());
-  //     setCurrentPage(1);
-  //   }, 500);
+    // Otherwise, wait 500ms before fetching
+    debounceRef.current = window.setTimeout(() => {
+      fetchPayments(searchInvoiceTerm.trim());
+      setCurrentPage(1);
+    }, 500);
 
-  //   return () => {
-  //     if (debounceRef.current) {
-  //       clearTimeout(debounceRef.current);
-  //     }
-  //   };
-  // }, [searchInvoiceTerm]);
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchInvoiceTerm]);
 
   // If user presses Enter, fire fetch immediately (no debounce)
   // const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -130,19 +128,19 @@ const AdminChequeDashboard: React.FC = () => {
   // };
 
   // Manual “Search” button click (in case user wants to avoid waiting 500 ms)
-  // const handleSearchClick = () => {
-  //   if (debounceRef.current) {
-  //     clearTimeout(debounceRef.current);
-  //   }
-  //   const term = searchInvoiceTerm.trim();
-  //   if (term === '') {
-  //     setNoResults(false);
-  //     fetchPayments();
-  //   } else {
-  //     fetchPayments(term);
-  //   }
-  //   setCurrentPage(1);
-  // };
+  const handleSearchClick = () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    const term = searchInvoiceTerm.trim();
+    if (term === '') {
+      setNoResults(false);
+      fetchPayments();
+    } else {
+      fetchPayments(term);
+    }
+    setCurrentPage(1);
+  };
 
   const handleNext = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
@@ -192,20 +190,18 @@ const AdminChequeDashboard: React.FC = () => {
           <h1 className='text-2xl font-bold mb-2'>Cheque Payment Dashboard</h1>
 
           <div className='flex items-center gap-2'>
-            {/* <div className='flex w-full sm:w-auto items-center gap-2'>
+            <div className='flex w-full sm:w-auto items-center gap-2'>
               <Input
                 className='w-full sm:w-64'
                 placeholder='Search by Invoice Number'
                 value={searchInvoiceTerm}
-                // onChange={(e) => setSearchInvoiceTerm(e.target.value)}
+                onChange={(e) => setSearchInvoiceTerm(e.target.value)}
                 // onKeyDown={handleKeyDown}
               />
-              <Button
-              // onClick={handleSearchClick}
-              >
+              <Button onClick={handleSearchClick}>
                 <Search className='h-4 w-4' />
               </Button>
-            </div> */}
+            </div>
             <Button
               variant='outline'
               size='sm'
@@ -253,7 +249,7 @@ const AdminChequeDashboard: React.FC = () => {
           ) : (
             <ChequePaymentTable
               refreshCheques={refreshChequePayment}
-              payments={payments}
+              payments={paginatedPayments}
             /> // <PaymentTable payments={paginatedPayments} />
           )}
 

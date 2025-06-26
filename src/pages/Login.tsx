@@ -134,11 +134,7 @@ const Login = () => {
         </CardContent>
         <CardFooter>
           <p className='text-center text-sm text-muted-foreground w-full'>
-            Demo credentials:
-            <br />
-            Admin: admin@example.com / admin123
-            <br />
-            User: employee1@example.com / employee123
+            Please contact your administrator if you do not have an account.
           </p>
         </CardFooter>
       </Card>
