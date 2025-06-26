@@ -67,48 +67,34 @@ const ExportPaymentDataDialog: React.FC<ExportDataDialogProps> = ({
     const { start_date, end_date } = values;
 
     try {
-      // We use GET with query parameters for start & end.
       const response = await fetch(
         `${API_URL}/api/bills/export-payments/?start_date=${encodeURIComponent(
           start_date
         )}&end_date=${encodeURIComponent(end_date)}`,
         {
           method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-
       if (!response.ok) {
-        console.error(
-          'Export failed with status',
-          response.status,
-          await response.text()
-        );
+        console.error('Export failed', response.status, await response.text());
         return;
       }
 
-      // Read response as a Blob (file data)
       const blob = await response.blob();
-      // Attempt to extract a filename from the Content-Disposition header, if present
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = 'exported-payments-bills';
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?(.+)"?/);
-        if (match && match[1]) {
-          filename = match[1];
-        }
-      }
-      // Create a temporary <a> to trigger download
-      const objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = objectUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(objectUrl);
+
+      // 1) Build exactly the filename you want:
+      const filename = `payments-${start_date}-to-${end_date}`;
+
+      // 2) Trigger download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename; // <-- your dynamic name
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Error exporting data:', err);
     }

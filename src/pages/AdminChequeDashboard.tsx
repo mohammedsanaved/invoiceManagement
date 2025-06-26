@@ -36,7 +36,7 @@ const AdminChequeDashboard: React.FC = () => {
   // Slice out just the page we need
   const paginatedPayments = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
-    return payments.slice(startIndex, startIndex + pageSize);
+    return payments?.slice(startIndex, startIndex + pageSize);
   }, [payments, currentPage, pageSize]);
 
   /**

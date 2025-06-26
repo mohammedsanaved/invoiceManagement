@@ -69,16 +69,13 @@ const ExportDataDialog: React.FC<ExportDataDialogProps> = ({
     const { start_date, end_date } = values;
 
     try {
-      // We use GET with query parameters for start & end.
       const response = await fetch(
         `${API_URL}/api/bills/export-bills/?start_date=${encodeURIComponent(
           start_date
         )}&end_date=${encodeURIComponent(end_date)}`,
         {
           method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -91,18 +88,11 @@ const ExportDataDialog: React.FC<ExportDataDialogProps> = ({
         return;
       }
 
-      // Read response as a Blob (file data)
       const blob = await response.blob();
-      // Attempt to extract a filename from the Content-Disposition header, if present
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = 'exported-bills';
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?(.+)"?/);
-        if (match && match[1]) {
-          filename = match[1];
-        }
-      }
-      // Create a temporary <a> to trigger download
+
+      // override filename:
+      const filename = `bills-${start_date}-to-${end_date}`;
+
       const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = objectUrl;
