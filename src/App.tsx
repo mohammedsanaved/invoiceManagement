@@ -71,7 +71,7 @@ const App = () => (
             <Route path='/unauthorized' element={<UnauthorizedPage />} />
 
             {/* Main route that redirects based on role */}
-            <Route path='/' element={<Index />} />
+            <Route path='/' element={<Index />} index />
 
             <Route path='*' element={<NotFoundPage />} />
           </Routes>

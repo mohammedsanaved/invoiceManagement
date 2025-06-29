@@ -107,7 +107,7 @@ const UserDashboard: React.FC = () => {
           schema
             .required('UTR number is required for UPI payments')
             .matches(/^\d+$/, 'UTR number must contain only digits')
-            .min(5, 'UTR number must be at least 5 digits'),
+            .min(6, 'UTR number must be at least 6 digits'),
         otherwise: (schema) => schema.notRequired(),
       }),
 
@@ -173,7 +173,7 @@ const UserDashboard: React.FC = () => {
             schema
               .required('UTR number is required for RTGS payments')
               .matches(/^\d+$/, 'UTR number must contain only digits')
-              .min(10, 'UTR number must be at least 10 digits'),
+              .min(6, 'UTR number must be at least 6 digits'),
           otherwise: (schema) => schema.notRequired(),
         }
       ),
@@ -188,7 +188,7 @@ const UserDashboard: React.FC = () => {
           then: (schema) =>
             schema
               .required('Transaction ID is required for NEFT/IMPS payments')
-              .min(8, 'Transaction ID must be at least 8 characters')
+              .min(6, 'Transaction ID must be at least 6 characters')
               .matches(/^[A-Za-z0-9]+$/, 'Transaction ID must be alphanumeric'),
           otherwise: (schema) => schema.notRequired(),
         }

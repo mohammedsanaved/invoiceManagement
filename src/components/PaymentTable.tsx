@@ -83,7 +83,13 @@ const PaymentTable = ({ payments }: { payments: Payment[] }) => {
                   ? 'Cash'
                   : payment.payment_method === 'upi'
                   ? 'UPI'
-                  : 'Cheque'}
+                  : payment.payment_method === 'cheque'
+                  ? 'Cheque'
+                  : payment.payment_method === 'electronic'
+                  ? 'Electronic'
+                  : payment.payment_method === ''
+                  ? '-'
+                  : '-'}
               </TableCell>
               <TableCell>{payment.transaction_number || '-'}</TableCell>
               <TableCell>

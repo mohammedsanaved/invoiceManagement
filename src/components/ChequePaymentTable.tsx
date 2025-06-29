@@ -213,10 +213,11 @@ const ChequePaymentTable = ({
           <TableHead>Route Name</TableHead>
           <TableHead>Outlet Name</TableHead>
           <TableHead>Invoice Number</TableHead>
-          <TableHead>Invoice Creation Bill Date</TableHead>
+          <TableHead>Invoice Date</TableHead>
           <TableHead>Payment Method</TableHead>
           <TableHead>Firm</TableHead>
           <TableHead>Cheque Type</TableHead>
+          <TableHead>Payment Date</TableHead>
           <TableHead>Cheque Date</TableHead>
           <TableHead>Amount</TableHead>
           <TableHead>Cheque Status</TableHead>
@@ -239,15 +240,19 @@ const ChequePaymentTable = ({
               <TableCell>{payment.route_name}</TableCell>
               <TableCell>{payment.outlet_name}</TableCell>
               <TableCell>{payment.invoice_number}</TableCell>
-              <TableCell>
-                {payment.created_at ? formatToIST(payment.created_at) : '-'}
-              </TableCell>
+              <TableCell>{payment.invoice_date || '-'}</TableCell>
               <TableCell>
                 {payment.payment_method === 'cash'
                   ? 'Cash'
                   : payment.payment_method === 'upi'
                   ? 'UPI'
-                  : 'Cheque'}
+                  : payment.payment_method === 'cheque'
+                  ? 'Cheque'
+                  : payment.payment_method === 'electronic'
+                  ? 'Electronic'
+                  : payment.payment_method === ''
+                  ? '-'
+                  : '-'}
               </TableCell>
               <TableCell>{payment.firm || '-'}</TableCell>
               <TableCell>
@@ -260,6 +265,9 @@ const ChequePaymentTable = ({
                   : payment.cheque_type === null || payment.cheque_type === ''
                   ? '-'
                   : 'Invalid'}
+              </TableCell>
+              <TableCell>
+                {payment.created_at ? formatToIST(payment.created_at) : '-'}
               </TableCell>
               <TableCell>{payment.cheque_date || '-'}</TableCell>
               <TableCell>{payment.amount}</TableCell>
