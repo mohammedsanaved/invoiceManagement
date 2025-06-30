@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setAccessToken(access);
       setCurrentUser(user);
       setIsAuthenticated(true);
-      navigate('/user');
+      navigate('/drauser');
     }
     return user;
   };
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setCurrentUser(user);
     setIsAuthenticated(true);
     setPendingAdminUsername(null);
-    navigate('/admin');
+    navigate('/adminuser');
   };
 
   const logout = () => {
