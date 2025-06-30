@@ -23,9 +23,9 @@ const Index = () => {
 
   // If user is authenticated, redirect based on role
   if (currentUser?.role === 'admin') {
-    return <Navigate to='/admin' replace />;
+    return <Navigate to='/adminuser' replace />;
   } else if (currentUser?.role === 'dra') {
-    return <Navigate to='/user' replace />;
+    return <Navigate to='/drauser' replace />;
   }
 
   // Fallback for any other cases

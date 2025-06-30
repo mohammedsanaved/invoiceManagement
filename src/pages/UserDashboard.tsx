@@ -98,6 +98,7 @@ const UserDashboard: React.FC = () => {
         .positive('Amount must be positive')
         .min(1, 'Amount must be at least 1')
         .max(maxAmount, `Amount cannot exceed ₹${maxAmount}`),
+
       payment_method: Yup.string()
         .required('Payment method is required')
         .oneOf(
@@ -105,14 +106,13 @@ const UserDashboard: React.FC = () => {
           'Invalid payment method'
         ),
 
-      // UPI validations
+      // UPI validations – exactly 6 digits
       transaction_number: Yup.string().when('payment_method', {
         is: 'upi',
         then: (schema) =>
           schema
             .required('UTR number is required for UPI payments')
-            .matches(/^\d+$/, 'UTR number must contain only digits')
-            .min(6, 'UTR number must be at least 6 digits'),
+            .matches(/^\d{6}$/, 'UTR number must be exactly 6 digits'),
         otherwise: (schema) => schema.notRequired(),
       }),
 
@@ -138,8 +138,10 @@ const UserDashboard: React.FC = () => {
         then: (schema) =>
           schema
             .required('Cheque number is required for cheque payments')
-            .min(6, 'Cheque number must be at least 6 characters')
-            .matches(/^[A-Za-z0-9]+$/, 'Cheque number must be alphanumeric'),
+            .matches(
+              /^[A-Za-z0-9]{6}$/,
+              'Cheque number must be exactly 6 alphanumeric characters'
+            ),
         otherwise: (schema) => schema.notRequired(),
       }),
       cheque_date: Yup.date().when('payment_method', {
@@ -167,7 +169,7 @@ const UserDashboard: React.FC = () => {
         otherwise: (schema) => schema.notRequired(),
       }),
 
-      // UTR Number for RTGS in electronic payments
+      // UTR Number for RTGS in electronic payments – exactly 6 digits
       utr_number: Yup.string().when(
         ['payment_method', 'electronic_cheque_type'],
         {
@@ -177,13 +179,12 @@ const UserDashboard: React.FC = () => {
           then: (schema) =>
             schema
               .required('UTR number is required for RTGS payments')
-              .matches(/^\d+$/, 'UTR number must contain only digits')
-              .min(6, 'UTR number must be at least 6 digits'),
+              .matches(/^\d{6}$/, 'UTR number must be exactly 6 digits'),
           otherwise: (schema) => schema.notRequired(),
         }
       ),
 
-      // Transaction ID for NEFT/IMPS in electronic payments
+      // Transaction ID for NEFT/IMPS in electronic payments – exactly 6 alphanumeric
       transaction_id: Yup.string().when(
         ['payment_method', 'electronic_cheque_type'],
         {
@@ -193,8 +194,10 @@ const UserDashboard: React.FC = () => {
           then: (schema) =>
             schema
               .required('Transaction ID is required for NEFT/IMPS payments')
-              .min(6, 'Transaction ID must be at least 6 characters')
-              .matches(/^[A-Za-z0-9]+$/, 'Transaction ID must be alphanumeric'),
+              .matches(
+                /^[A-Za-z0-9]{6}$/,
+                'Transaction ID must be exactly 6 alphanumeric characters'
+              ),
           otherwise: (schema) => schema.notRequired(),
         }
       ),

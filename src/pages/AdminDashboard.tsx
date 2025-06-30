@@ -353,13 +353,13 @@ const AdminDashboard = () => {
           </div>
 
           <div className='flex items-center gap-2 px-3 py-2 bg-white flex-wrap rounded-lg shadow'>
-            <Link to='/admin/payments/cheque'>
+            <Link to='/adminuser/payments/cheque-history'>
               <Button size={'sm'} className='flex items-center gap-2'>
                 Cheque History
                 <ArrowUpRight className='h-4 w-4' />
               </Button>
             </Link>
-            <Link to='/admin/payments'>
+            <Link to='/adminuser/payments'>
               <Button size={'sm'} className='flex items-center gap-2'>
                 Pay History
                 <ArrowUpRight className='h-4 w-4' />

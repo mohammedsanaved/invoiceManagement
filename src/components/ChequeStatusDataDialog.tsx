@@ -80,7 +80,7 @@ export default function ChequeStatusDataDialog({
                     onValueChange={(val) => setFieldValue('cheque_status', val)}
                   >
                     <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select Employee' />
+                      <SelectValue placeholder='Cheque Status' />
                     </SelectTrigger>
                     <SelectContent>
                       {options.map((emp) => (

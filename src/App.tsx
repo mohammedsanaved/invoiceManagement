@@ -34,7 +34,7 @@ const App = () => (
 
             {/* Protected Admin Route */}
             <Route
-              path='/admin'
+              path='/adminuser'
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminDashboard />
@@ -42,7 +42,7 @@ const App = () => (
               }
             />
             <Route
-              path='/admin/payments'
+              path='/adminuser/payments'
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminPaymentDashboard />
@@ -50,7 +50,7 @@ const App = () => (
               }
             />
             <Route
-              path='/admin/payments/cheque'
+              path='/adminuser/payments/cheque-history'
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminChequeDashboard />
@@ -60,7 +60,7 @@ const App = () => (
 
             {/* Protected User Route */}
             <Route
-              path='/user'
+              path='/drauser'
               element={
                 <ProtectedRoute allowedRoles={['dra']}>
                   <UserDashboard />

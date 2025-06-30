@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from './ui/select';
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import {
 } from './ui/table';
 import { Trash } from 'lucide-react';
 import { Button } from './ui/button';
-import { toast } from '@/hooks/use-toast';
+// import { toast } from '@/hooks/use-toast';
 import { API_URL } from '@/lib/url';
 
 interface Invoice {
@@ -49,7 +49,7 @@ interface ChequePaymentTableProps {
 
 const ChequePaymentTable = ({
   payments,
-  onPaymentUpdate,
+  // onPaymentUpdate,
   onPaymentDelete,
   refreshCheques,
   openChequeDataDialog,
@@ -57,69 +57,69 @@ const ChequePaymentTable = ({
   const [loadingStates, setLoadingStates] = useState<{
     [key: number]: boolean;
   }>({});
-  const [paymentStatus] = useState([
-    {
-      key: 'cleared',
-      label: 'Cleared',
-    },
-    {
-      key: 'pending',
-      label: 'Pending',
-    },
-    {
-      key: 'bounced',
-      label: 'Bounced',
-    },
-  ]);
+  // const [paymentStatus] = useState([
+  //   {
+  //     key: 'cleared',
+  //     label: 'Cleared',
+  //   },
+  //   {
+  //     key: 'pending',
+  //     label: 'Pending',
+  //   },
+  //   {
+  //     key: 'bounced',
+  //     label: 'Bounced',
+  //   },
+  // ]);
 
   // Update cheque status
-  const updateChequeStatus = async (paymentId: number, newStatus: string) => {
-    setLoadingStates((prev) => ({ ...prev, [paymentId]: true }));
-    const token = localStorage.getItem('accessToken');
+  // const updateChequeStatus = async (paymentId: number, newStatus: string) => {
+  //   setLoadingStates((prev) => ({ ...prev, [paymentId]: true }));
+  //   const token = localStorage.getItem('accessToken');
 
-    try {
-      const response = await fetch(
-        `${API_URL}/api/payments/cheque-history/${paymentId}/`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            // Add authorization header if needed
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            cheque_status: newStatus,
-          }),
-        }
-      );
+  //   try {
+  //     const response = await fetch(
+  //       `${API_URL}/api/payments/cheque-history/${paymentId}/`,
+  //       {
+  //         method: 'PUT',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           // Add authorization header if needed
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: JSON.stringify({
+  //           cheque_status: newStatus,
+  //         }),
+  //       }
+  //     );
 
-      if (!response.ok) {
-        throw new Error(`Failed to update status: ${response.statusText}`);
-      }
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to update status: ${response.statusText}`);
+  //     }
 
-      const updatedPayment = await response.json();
+  //     const updatedPayment = await response.json();
 
-      // Call the callback to update parent component state
-      if (onPaymentUpdate) {
-        onPaymentUpdate(updatedPayment);
-      }
-      toast({
-        title: 'Cheque status updated successfully',
-        description: `Payment ID ${paymentId} status changed to ${newStatus}`,
-        variant: 'default',
-      });
-      refreshCheques?.(); // Refresh cheques if callback is provided
+  //     // Call the callback to update parent component state
+  //     if (onPaymentUpdate) {
+  //       onPaymentUpdate(updatedPayment);
+  //     }
+  //     toast({
+  //       title: 'Cheque status updated successfully',
+  //       description: `Payment ID ${paymentId} status changed to ${newStatus}`,
+  //       variant: 'default',
+  //     });
+  //     refreshCheques?.(); // Refresh cheques if callback is provided
 
-      // Show success message (you can replace with your preferred notification system)
-      console.log('Cheque status updated successfully');
-    } catch (error) {
-      console.error('Error updating cheque status:', error);
-      // Show error message (you can replace with your preferred notification system)
-      alert('Failed to update cheque status. Please try again.');
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, [paymentId]: false }));
-    }
-  };
+  //     // Show success message (you can replace with your preferred notification system)
+  //     console.log('Cheque status updated successfully');
+  //   } catch (error) {
+  //     console.error('Error updating cheque status:', error);
+  //     // Show error message (you can replace with your preferred notification system)
+  //     alert('Failed to update cheque status. Please try again.');
+  //   } finally {
+  //     setLoadingStates((prev) => ({ ...prev, [paymentId]: false }));
+  //   }
+  // };
 
   // Delete payment
   const deletePayment = async (paymentId: number) => {
@@ -170,9 +170,9 @@ const ChequePaymentTable = ({
     }
   };
 
-  const handleSelectChange = (paymentId: number, newStatus: string) => {
-    updateChequeStatus(paymentId, newStatus);
-  };
+  // const handleSelectChange = (paymentId: number, newStatus: string) => {
+  //   updateChequeStatus(paymentId, newStatus);
+  // };
 
   const handleDeleteClick = (paymentId: number) => {
     deletePayment(paymentId);
@@ -235,9 +235,9 @@ const ChequePaymentTable = ({
             payment.cheque_status === 'cleared' ||
             payment.cheque_status === 'pending';
 
-          const isPending =
-            payment.cheque_status === 'bounced' ||
-            payment.cheque_status === 'cleared';
+          // const isPending =
+          //   payment.cheque_status === 'bounced' ||
+          //   payment.cheque_status === 'cleared';
           return (
             <TableRow key={payment.id} className='p-2'>
               <TableCell>{payment.route_name}</TableCell>
@@ -274,7 +274,7 @@ const ChequePaymentTable = ({
               </TableCell>
               <TableCell>{payment.cheque_date || '-'}</TableCell>
               <TableCell>{payment.amount}</TableCell>
-              <TableCell>
+              {/* <TableCell>
                 <Select
                   value={payment.cheque_status}
                   disabled={isLoading || isPending}
@@ -293,6 +293,13 @@ const ChequePaymentTable = ({
                     ))}
                   </SelectContent>
                 </Select>
+              </TableCell> */}
+              <TableCell>
+                {payment.cheque_status === 'pending'
+                  ? 'Pending'
+                  : payment.cheque_status === 'bounced'
+                  ? 'Bounced'
+                  : 'Cleared'}
               </TableCell>
               <TableCell>
                 <Button

@@ -198,7 +198,7 @@ const AdminPaymentDashboard: React.FC = () => {
             <Button
               variant='outline'
               size='sm'
-              onClick={() => navigate('/admin')}
+              onClick={() => navigate('/adminuser')}
               className='flex items-center gap-1'
             >
               <ChevronLeft className='h-4 w-4' /> Back

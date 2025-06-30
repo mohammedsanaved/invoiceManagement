@@ -12,7 +12,7 @@ const UnauthorizedPage = () => {
         You don't have permission to view this page.
       </p>
       <Button asChild className='mt-8'>
-        <Link to='/'>
+        <Link to='/login'>
           Go to {currentUser?.role === 'admin' ? 'Admin' : 'User'} Dashboard
         </Link>
       </Button>
