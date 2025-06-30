@@ -35,6 +35,11 @@ import {
 import { API_URL } from '@/lib/url';
 import { Search } from 'lucide-react';
 
+import { BANK_OPTIONS } from '../types/Banks';
+// import type { BankOption } from '../types/Banks';
+// import SearchableDropdown from '@/components/SearchableDropdown';
+import BankSearchDropdown from '@/components/BankSearchDropdown';
+
 const UserDashboard: React.FC = () => {
   const { userBills, userBillsLoading, userBillsError, fetchUserInvoices } =
     useData();
@@ -639,12 +644,61 @@ const UserDashboard: React.FC = () => {
                       {/* Bank Name */}
                       <div className='grid grid-cols-4 items-center gap-4'>
                         <Label className='text-right'>Bank Name *</Label>
-                        <div className='col-span-3'>
+                        {/* <div className='col-span-3'>
                           <Field
                             as={Input}
                             name='bank_name'
                             placeholder='Enter bank name'
                           />
+                          <ErrorMessage
+                            name='bank_name'
+                            component='div'
+                            className='text-red-500 text-sm mt-1'
+                          />
+                        </div> */}
+
+                        <div className='col-span-3'>
+                          <Field name='bank_name'>
+                            {({
+                              field,
+                              form,
+                            }: {
+                              field: { value: string };
+                              form: import('formik').FormikProps<PaymentFormValues>;
+                            }) => (
+                              // <Select
+                              //   value={field.value}
+                              //   onValueChange={(val) =>
+                              //     form.setFieldValue('bank_name', val)
+                              //   }
+                              // >
+                              //   <SelectTrigger className='w-full'>
+                              //     <SelectValue placeholder='Select bank' />
+                              //   </SelectTrigger>
+                              //   <SelectContent>
+                              //     {BANK_OPTIONS.map((opt: BankOption) => (
+                              //       <SelectItem
+                              //         key={opt.value}
+                              //         value={opt.value}
+                              //       >
+                              //         {opt.label}
+                              //       </SelectItem>
+                              //     ))}
+                              //   </SelectContent>
+                              // </Select>
+                              <BankSearchDropdown
+                                options={BANK_OPTIONS}
+                                selectedValue={field.value}
+                                onChange={(val) =>
+                                  form.setFieldValue('bank_name', val)
+                                }
+                                placeholder='Select your bank'
+                                // selectedId={form.values.outlet || null}
+                                // placeholder='Select Outlet'
+                                // disabled={!selectedRouteId}
+                              />
+                            )}
+                          </Field>
                           <ErrorMessage
                             name='bank_name'
                             component='div'

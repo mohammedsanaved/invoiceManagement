@@ -10,13 +10,26 @@ import { ChevronDown, ChevronLeft, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ChequePaymentTable from '@/components/ChequePaymentTable';
 import { Input } from '@/components/ui/input';
+import ChequeStatusDataDialog from '@/components/ChequeStatusDataDialog';
+import type { Invoice } from '@/types';
+// import type { Invoice } from '@/types';
+
 // import { Input } from '@/components/ui/input';
+
+// interface Cheque {
+//   id: number;
+//   cheque_status: 'pending' | 'cleared' | 'bounced';
+// }
 
 const AdminChequeDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Use 'any' if cheque objects do not fully match Invoice, or define a Cheque type with the correct shape
+  type ChequeStatusMinimal = Pick<Invoice, 'id' | 'cheque_status'>;
+  const [selectedCheque, setSelectedCheque] =
+    useState<ChequeStatusMinimal | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
@@ -24,6 +37,7 @@ const AdminChequeDashboard: React.FC = () => {
   const [searchInvoiceTerm, setSearchInvoiceTerm] = useState('');
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [noResults, setNoResults] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // We'll keep a ref to the current debounce timer:
   const debounceRef = useRef<number | null>(null);
@@ -113,23 +127,9 @@ const AdminChequeDashboard: React.FC = () => {
   }, [searchInvoiceTerm]);
 
   // If user presses Enter, fire fetch immediately (no debounce)
-  // const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  //   if (e.key === 'Enter') {
-  //     if (debounceRef.current) {
-  //       clearTimeout(debounceRef.current);
-  //     }
-  //     const term = searchInvoiceTerm.trim();
-  //     if (term === '') {
-  //       setNoResults(false);
-  //       fetchPayments();
-  //     } else {
-  //       fetchPayments(term);
-  //     }
-  //     setCurrentPage(1);
-  //   }
+  // const openChequeDataDialog = () => {
+  //   setIsDialogOpen(true);
   // };
-
-  // Manual “Search” button click (in case user wants to avoid waiting 500 ms)
   const handleSearchClick = () => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -250,9 +250,21 @@ const AdminChequeDashboard: React.FC = () => {
             </div>
           ) : (
             <ChequePaymentTable
-              refreshCheques={refreshChequePayment}
               payments={paginatedPayments}
-            /> // <PaymentTable payments={paginatedPayments} />
+              refreshCheques={refreshChequePayment}
+              // new: pass a function that receives the clicked cheque
+              openChequeDataDialog={(invoice) => {
+                setSelectedCheque({
+                  id: invoice.id,
+                  // narrow the string to your union
+                  cheque_status: invoice.cheque_status as
+                    | 'pending'
+                    | 'cleared'
+                    | 'bounced',
+                });
+                setIsDialogOpen(true);
+              }}
+            />
           )}
 
           {/* Pagination controls */}
@@ -285,6 +297,40 @@ const AdminChequeDashboard: React.FC = () => {
       <ExportPaymentDataDialog
         open={isExportDialogOpen}
         onClose={() => setIsExportDialogOpen(false)}
+      />
+      <ChequeStatusDataDialog
+        cheque={
+          selectedCheque
+            ? {
+                id: selectedCheque.id,
+                cheque_status:
+                  (selectedCheque as Invoice).cheque_status ?? 'pending',
+              }
+            : undefined
+        }
+        open={isDialogOpen}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setSelectedCheque(null);
+        }}
+        onSubmitStatus={async (newStatus) => {
+          if (!selectedCheque) return;
+          const token = localStorage.getItem('accessToken');
+          await fetch(
+            `${API_URL}/api/payments/cheque-history/${selectedCheque.id}/`,
+            {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ cheque_status: newStatus }),
+            }
+          );
+          await refreshChequePayment();
+          setIsDialogOpen(false);
+          setSelectedCheque(null);
+        }}
       />
     </Layout>
   );

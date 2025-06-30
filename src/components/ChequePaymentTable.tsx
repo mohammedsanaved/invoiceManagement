@@ -44,6 +44,7 @@ interface ChequePaymentTableProps {
   onPaymentUpdate?: (updatedPayment: Invoice) => void;
   onPaymentDelete?: (paymentId: number) => void;
   refreshCheques?: () => void; // Optional callback to refresh cheques
+  openChequeDataDialog?: (cheque: Invoice) => void; // Optional callback to open cheque data dialog
 }
 
 const ChequePaymentTable = ({
@@ -51,6 +52,7 @@ const ChequePaymentTable = ({
   onPaymentUpdate,
   onPaymentDelete,
   refreshCheques,
+  openChequeDataDialog,
 }: ChequePaymentTableProps) => {
   const [loadingStates, setLoadingStates] = useState<{
     [key: number]: boolean;
@@ -222,6 +224,7 @@ const ChequePaymentTable = ({
           <TableHead>Amount</TableHead>
           <TableHead>Cheque Status</TableHead>
           <TableHead>Action</TableHead>
+          <TableHead>Status</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -299,6 +302,16 @@ const ChequePaymentTable = ({
                   onClick={() => handleDeleteClick(payment.id)}
                 >
                   <Trash size={16} className='text-red-400' />
+                </Button>
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='cursor-pointer'
+                  onClick={() => openChequeDataDialog?.(payment)}
+                >
+                  Update
                 </Button>
               </TableCell>
             </TableRow>

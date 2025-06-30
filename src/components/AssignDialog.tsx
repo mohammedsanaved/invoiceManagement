@@ -65,6 +65,8 @@ const AssignDialog: React.FC<AssignDialogProps> = ({
     setAmount(originalAmount);
   }, [invoice]);
 
+  console.log('invoice in AssignDialog:', invoice);
+
   // Fetch all employees once:
   useEffect(() => {
     const fetchEmployee = async () => {

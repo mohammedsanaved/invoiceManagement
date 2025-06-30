@@ -26,6 +26,7 @@ export interface Invoice {
   created_at?: string;
   cleared_at?: string | null;
   assigned_to_id?: number;
+  cheque_status?: 'pending' | 'cleared' | 'bounced';
   assigned_to_name?: string;
 }
 
